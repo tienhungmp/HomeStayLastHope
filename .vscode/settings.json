@@ -1,0 +1,29 @@
+{
+  "eslint.alwaysShowStatus": true,
+  "editor.formatOnSave": true,
+  "editor.tabSize": 4,
+  "editor.fontSize": 16,
+  "editor.codeActionsOnSave": {
+    "source.fixAll": "always",
+    "source.organizeImports": "always"
+  },
+  "files.exclude": {
+    "**/.git": true,
+    "**.buckconfig": true,
+    "**.flowconfig": true,
+    "**.ruby-version": true,
+    "**.watchmanconfig": true,
+    "**Gemfile": true,
+    "**Gemfile.lock": true,
+    "**metro.config.js": true,
+    "**react-native.config.js": true,
+    "**.prettierrc.js": true,
+    "**babel.config.js": true,
+    "**eslintrc.js": true,
+    "**.idea": true,
+    "**.bundle": true,
+    "**__tests__": true,
+    "**_mock": true
+    // "**/node_modules": true
+  }
+}

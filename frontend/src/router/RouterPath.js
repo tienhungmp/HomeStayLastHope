@@ -1,0 +1,16 @@
+export const RouterPath = {
+    HOME: '/home',
+    SEARCH: '/search',
+    DETAIL: '/detail',
+    REGISTER_HOST: '/register-host',
+    ADMIN: '/admin',
+    PROFILE: '/profile',
+    MY_BOOKING: '/my-booking',
+    MY_WALLET: '/my-wallet',
+    MY_TICKET: '/my-ticket',
+    CHANGE_PASSWORD: '/change-password',
+    CONFIRM_INFORMATION: '/confirm-information',
+    VNPAY_RETURN: '/vnpay/return',
+    CREATED_SUCCESS: '/create_success',
+    NOT_FOUND: '/*',
+}

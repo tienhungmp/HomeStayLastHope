@@ -1,0 +1,29 @@
+{
+    "printWidth": 140,
+    "tabWidth": 2,
+    "useTabs": true,
+    "semi": false,
+    "trailingComma": "all",
+    "singleQuote": true,
+    "quoteProps": "as-needed",
+    "jsxSingleQuote": false,
+    "bracketSpacing": false,
+    "bracketSameLine": false,
+    "arrowParens": "avoid",
+    "htmlWhitespaceSensitivity": "ignore",
+    "singleAttributePerLine": true,
+    "plugins": [
+        "prettier-plugin-tailwindcss"
+    ],
+    "overrides": [
+        {
+            "files": "*.jsx",
+            "options": {
+                "parser": "babel"
+            }
+        }
+    ],
+    "tailwindFunctions": [
+        "jcls"
+    ]
+}
