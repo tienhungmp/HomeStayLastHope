@@ -9,7 +9,7 @@ export default function AddWalletModal() {
 	const { auth } = useAuth()
 	const handleAdd = () => {
 		if (money < 20000) return ToastNotiError('Vui lý nhập số tiền >= 20.000đ')
-		if (money > 10000000) return ToastNotiError('Vui lý nhập số tiền < 10.000.000đ')
+		if (money > 100000000) return ToastNotiError('Vui lý nhập số tiền < 100.000.000đ')
 		if (money === '') return ToastNotiError('Vui lý nhập số tiền')
 		factories
 			.createPayment({ userId: auth._id, amount: parseInt(money) })

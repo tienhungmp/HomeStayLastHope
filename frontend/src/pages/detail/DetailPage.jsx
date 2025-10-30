@@ -41,7 +41,32 @@ export default function DetailPage() {
 			.finally(() => setLoading(false))
 	}, [id])
 
-	function handleConfirm() {
+	async function handleConfirm() {
+		// Validate room availability before proceeding
+
+		const payload = {
+			userId: auth._id,
+			accommodationId: id,
+			rooms: {
+				roomId: numbers[0]?.roomId,
+				bookedQuantity: numbers[0]?.number
+			}
+		}
+
+
+		try {
+			const res = await factories.checkRoomAvailability(payload)
+			if (!res.available) {
+				alert('Số lượng phòng bạn chọn vượt quá số phòng còn trống. Vui lòng chọn lại!')
+				return
+			}
+		} catch (err) {
+			console.error('Room availability check failed:', err)
+			alert('Số lượng phòng bạn chọn vượt quá số phòng còn trống. Vui lòng chọn lại!')
+			return
+		}
+
+		// Proceed to confirmation if validation passes
 		const ticket = {
 			...data,
 			roomsSelected: numbers,

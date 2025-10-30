@@ -34,6 +34,7 @@ export default function ConfirmPage() {
 			ToastNotiError('Vui lòng chọn ngày trả phòng')
 			return
 		}
+		
 		setLoading(true)
 		const newFromDate = getDate(values.fromDate, 8)
 		const newToDate = getDate(values.toDate, 8)
@@ -49,6 +50,12 @@ export default function ConfirmPage() {
 				bookedQuantity: x.number,
 			})),
 			totalPrice: data.roomsSelected.reduce((total, number) => total + number.price * number.number, 0) * days,
+		}
+
+		if( newTicket.totalPrice <=0) {
+			ToastNotiError('Ngay ko hop le')
+			setLoading(false)
+			return
 		}
 		factories
 			.createTicket(newTicket)

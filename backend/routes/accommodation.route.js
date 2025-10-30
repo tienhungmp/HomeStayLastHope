@@ -791,5 +791,89 @@ router.get("/rooms/admin", async (req, res) => {
         res.status(500).json({ message: "Internal server error" });
     }
 });
+ 
+router.post("/available-rooms", async (req, res) => {
+    try {
+        const { accommodationId, checkInDate, checkOutDate } = req.body;
+
+        // Validate accommodation exists
+        const accommodation = await Accommodation.findById(accommodationId);
+        if (!accommodation) {
+            return res.status(404).json({ message: "Accommodation not found" });
+        }
+
+        // Get all rooms of this accommodation
+        const rooms = await Room.find({ accommodationId });
+
+        if (rooms.length === 0) {
+            return res.status(200).json({ 
+                accommodationId, 
+                availableRooms: [] 
+            });
+        }
+
+        // Calculate available quantity for each room
+        const availableRooms = await Promise.all(
+            rooms.map(async (room) => {
+                let bookedQuantity = 0;
+
+                // If dates are provided, calculate booked rooms in that period
+                if (checkInDate && checkOutDate) {
+                    const overlappingTickets = await Ticket.find({
+                        accommodation: accommodationId,
+                        status: { $in: [1, 2] }, // 1: pending, 2: confirmed (adjust based on your status codes)
+                        $or: [
+                            {
+                                // New booking starts during existing booking
+                                fromDate: { $lte: checkOutDate },
+                                toDate: { $gte: checkInDate }
+                            }
+                        ]
+                    });
+
+                    // Sum up booked quantities for this specific room
+                    overlappingTickets.forEach(ticket => {
+                        const roomBooking = ticket.rooms.find(
+                            r => r.roomId.toString() === room._id.toString()
+                        );
+                        if (roomBooking) {
+                            bookedQuantity += roomBooking.bookedQuantity;
+                        }
+                    });
+                }
+
+                const availableQuantity = room.quantity - bookedQuantity;
+
+                return {
+                    roomId: room._id,
+                    roomName: room.name,
+                    capacity: room.capacity,
+                    pricePerNight: room.pricePerNight,
+                    totalQuantity: room.quantity,
+                    bookedQuantity,
+                    availableQuantity: Math.max(0, availableQuantity),
+                    amenities: room.amenities,
+                    images: room.images,
+                    description: room.description
+                };
+            })
+        );
+
+        return res.status(200).json({
+            accommodationId,
+            accommodationName: accommodation.name,
+            checkInDate: checkInDate || null,
+            checkOutDate: checkOutDate || null,
+            availableRooms
+        });
+
+    } catch (error) {
+        console.error("Error getting available rooms:", error);
+        return res.status(500).json({ 
+            message: "Internal server error", 
+            error: error.message 
+        });
+    }
+});
 
 export default router;

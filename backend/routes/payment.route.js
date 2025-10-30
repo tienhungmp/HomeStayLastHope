@@ -8,7 +8,6 @@ import { sortObject } from '../utils/vnpay.utils.js';
 const router = express.Router();
 //  tao giao dịch payment qua ngân hàng
 router.post('/create_payment_url', async function (req, res) {
-    console.log('vo day')
     process.env.TZ = 'Asia/Ho_Chi_Minh';
     let date = new Date();
     let createDate = moment(date).format('YYYYMMDDHHmmss');
@@ -94,7 +93,17 @@ router.get('/user/:id', async function (req, res) {
             message: 'Tài khoản không tồn tại',
         });
     }
-    const payments = await Payment.find({ userId: id }).sort({ createAt: -1 });
+    let payments;
+    console.log(user.roles);
+    if (user.roles.includes('admin')) {
+        payments = await Payment.find()
+            .populate('userId', 'fullName')
+            .sort({ createAt: -1 });
+    } else {
+        payments = await Payment.find({ userId: id })
+            .populate('userId', 'fullName')
+            .sort({ createAt: -1 });
+    }
     const balance = user.balance;
     return res.status(200).json({
         status: 200,

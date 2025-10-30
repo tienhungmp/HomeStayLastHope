@@ -28,7 +28,6 @@ export default function AdminBookingListSection() {
 		}
 		factories
 			.getListTicket({
-				status: activeTab,
 				keyword: keyword,
 				...(getBranchId(auth) && {id: getBranchId(auth)}),
 			})
@@ -43,7 +42,7 @@ export default function AdminBookingListSection() {
 		loadList()
 	}, [auth, activeTab, keyword])
 
-	function openConfirm(row) {
+	function openCancel(row) {
 		onOpen({
 			view: (
 				<ConfirmModal
@@ -173,7 +172,7 @@ export default function AdminBookingListSection() {
 					)}
 					{row.status === 1 && (
 						<Button
-							onClick={() => openConfirm(row)}
+							onClick={() => openCancel(row)}
 							size="sm"
 							borderRadius={'full'}
 							bgColor={'tomato'}

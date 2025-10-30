@@ -247,7 +247,7 @@ export function differenceInTime(startTime, endTime) {
     // Tính chênh lệch (theo mili giây)
     const diffInMilliseconds = Math.abs(end - start);
     // Chuyển đổi sang ngày
-    return diffInMilliseconds / (1000 * 60 * 60 * 24) + 1;
+    return diffInMilliseconds / (1000 * 60 * 60 * 24);
 }
 export function differenceTimeDate(startTime, endTime) {
     if (startTime == null || endTime == null) {

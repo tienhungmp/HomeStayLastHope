@@ -244,4 +244,18 @@ export const factories = {
             method: 'GET',
         })
     },
+    checkRoomAvailability: data => {
+        return ApiOperation.request({
+            url: ApiConstants.TICKET + '/checkQuantityRoom',
+            method: 'POST',
+            data,
+        })
+    },
+    getAvailableRooms: data => {
+        return ApiOperation.request({
+            url: ApiConstants.ACCOMMODATIONS + '/available-rooms',
+            method: 'POST',
+            data,
+        })
+    }
 }

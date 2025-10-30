@@ -50,7 +50,7 @@ router.post("/", async (req, res) => {
             if ([0, 1, 2].includes(accommodation.type)) {
                 return res.status(400).json({
                     message:
-                        "Không chọn phòng với dạnh chỗ nghỉ nguyên căn",
+                        "Không chọn phòng với dạng chỗ nghỉ nguyên căn",
                 });
             }
 
@@ -75,7 +75,7 @@ router.post("/", async (req, res) => {
                 });
 
                 const totalBookedQuantity = overlappingTickets.reduce((sum, ticket) => {
-                    const roomBooking = ticket.rooms.find((r) => r.roomId === roomId);
+                    const roomBooking = ticket.rooms?.find((r) => r.roomId?.equals(roomId));
                     return sum + (roomBooking?.bookedQuantity || 0);
                 }, 0);
 
@@ -114,7 +114,7 @@ router.post("/", async (req, res) => {
         await newPayment.save();
 
         const admin = await User.findOne({ email: process.env.ADMIN_EMAIL });
-        console.log(admin)
+        
         const newPaymentAdmin = new Payment({
             txnRef: 'I' + orderId,
             amount: totalPrice,
@@ -149,6 +149,51 @@ router.post("/", async (req, res) => {
         res.status(500).json({ message: "Lỗi hệ thống" });
     }
 });
+
+// check count accommodation
+router.post("/checkQuantityRoom", async (req, res) => {
+    try {
+        const { accommodationId, rooms, userId } = req.body;
+        if (!accommodationId || !rooms || !userId) {
+            return res.status(400).json({ message: "Lỗi hệ thống thiếu thông tin" });
+        }
+        const accommodation = await Accommodation.findById(
+            accommodationId,
+        ).populate({
+            path: "rooms",
+            select: "name ownerId capacity quantity pricePerNight amenities",
+        });
+
+
+        if (!accommodation) {
+            return res.status(404).json({ message: "Không tồn tại chỗ nghỉ" });
+        }
+        const {roomId, bookedQuantity} = rooms;
+
+        const room = accommodation.rooms.find(
+            (r) => r._id.equals(roomId)
+        );
+        if (!room) {
+            return res.status(404).json({
+                message: `Không tồn tại phòng đang được tạo`,
+            });
+        }
+        if(bookedQuantity > room.quantity) {
+            return res.status(400).json({
+                message: `Số lượng phòng vượt quá số lượng phòng hiện có`,
+                available: false
+            });
+        }
+
+        return res.status(200).json({
+            message: `Số lượng phòng hợp lệ`,
+            available: true
+        })
+    } catch (error) {
+        console.error("Error creating ticket:", error);
+        res.status(500).json({ message: "Lỗi hệ thống" });
+    }
+})
 
 router.patch("/:ticketId", async (req, res) => {
     const { ticketId } = req.params;
@@ -295,10 +340,27 @@ router.put('/:id', async (req, res) => {
                 .status(400)
                 .json({ message: 'Status is required' });
         }
+        console.log(status)
         const checkTicket = await Ticket.findById(id).populate('accommodation').populate('hostId');
         const now = new Date();
         const departureTime = new Date(checkTicket.fromDate);
         const twelveHours = 24 * 60 * 60 * 1000; // 12h
+        if (status == 3) {
+            // Only allow completing if ticket is confirmed and not yet completed
+            if (checkTicket.status === 3) {
+                return res.status(400).json({ message: 'Không thể chuyển trạng thái hoàn thành' });
+            }
+            const now = new Date();
+            const departureTime = new Date(checkTicket.toDate);
+            if (now < departureTime) {
+                return res.status(400).json({ message: 'Chưa thể hoàn thành, ngày trả phòng chưa đến' });
+            }
+            // Update status to 3 immediately and return result
+            checkTicket.status = 3;
+            await checkTicket.save();
+            return res.status(200).json({ message: 'Cập nhật trạng thái hoàn thành thành công', ticket: checkTicket });
+
+        }
         if (now.getTime() - departureTime.getTime() > twelveHours) {
             return res
                 .status(400)
@@ -379,6 +441,26 @@ router.put('/:id', async (req, res) => {
         res
             .status(500)
             .json({ message: 'Error updating ticket', error: error.message });
+    }
+});
+
+router.patch('/complete/:ticketId', async (req, res) => {
+    try {
+        const { ticketId } = req.params;
+        const ticket = await Ticket.findById(ticketId);
+        if (!ticket) {
+            return res.status(404).json({ message: 'Không tìm thấy thông tin đặt phòng' });
+        }
+        // Only allow completing if ticket is confirmed and not yet completed
+        if (!ticket.isConfirmed || ticket.status === 3) {
+            return res.status(400).json({ message: 'Không thể chuyển trạng thái hoàn thành' });
+        }
+        ticket.status = 3; // 3: completed
+        await ticket.save();
+        res.status(200).json({ message: 'Cập nhật trạng thái hoàn thành thành công', ticket });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Lỗi hệ thống', error: error.message });
     }
 });
 

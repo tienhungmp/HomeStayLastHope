@@ -87,34 +87,37 @@ function Header({showText, showSearch = false}) {
 	}
 
 	return (
-		<div className={cn('relative rounded-ee-xl rounded-es-xl bg-blue-800', !showText && !showSearch && 'rounded-none')}>
-			<div className="m-auto w-full max-w-[80%] 2xl:max-w-[80%]">
+		<div className={cn('relative rounded-ee-xl rounded-es-xl', !showText && !showSearch && 'rounded-none')}>
+			{/* Luxury Banner */}
+			<div className="absolute inset-0 overflow-hidden">
+				<div className="absolute left-0 top-0 h-full w-full bg-[url('https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?auto=format&fit=crop&w=1920&q=80')] bg-cover bg-center" />
+				<div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
+			</div>
+
+			<div className="relative z-10 m-auto w-full max-w-[80%] 2xl:max-w-[80%]">
 				<header className="pt-5 text-white">
 					<div className="container mx-auto flex items-center justify-between">
 						<div className="flex items-center space-x-4">
 							<Link
 								to="/"
-								className="text-2xl font-bold"
+								className="text-3xl font-extrabold tracking-wide drop-shadow-lg"
 							>
-								Booking.com
+								LuxeStay
 							</Link>
 						</div>
-						<div className="flex items-center space-x-2">
+						<div className="flex items-center space-x-3">
 							{!auth && (
 								<Button
-									variant="light"
-									color="white"
-									className="rounded-xl font-bold"
-									style={{
-										backgroundColor: 'rgba(255, 255, 255, 0.2)',
-									}}
+									variant="shadow"
+									color="primary"
+									className="rounded-full bg-white/10 px-5 py-2 font-semibold text-white backdrop-blur-sm transition hover:bg-white/20"
 									onClick={() =>
 										router.push({
 											pathname: RouterPath.REGISTER_HOST,
 										})
 									}
 								>
-									Đăng chỗ nghỉ của quý vị
+									Trở thành chủ nhà
 								</Button>
 							)}
 
@@ -124,61 +127,65 @@ function Header({showText, showSearch = false}) {
 										<DropdownTrigger>
 											<Button
 												variant="light"
-												className="border-none hover:bg-transparent"
+												className="rounded-full border-none bg-white/10 px-4 py-2 backdrop-blur-sm hover:bg-white/20"
 											>
 												<Avatar
 													src={auth.profilePictureUrl}
-													className="h-6 w-6 bg-gray-200"
+													className="h-7 w-7 ring-2 ring-white/50"
 												/>
-												<p className="text-white">{auth.fullName} </p>
-												<i className="fa fa-caret-down text-white"></i>
+												<p className="text-white">{auth.fullName}</p>
+												<i className="fa fa-chevron-down text-xs text-white/80"></i>
 											</Button>
 										</DropdownTrigger>
 										{auth.roles[0] === ROLES.USER || (auth.roles[0] === ROLES.HOST && auth.isRequestBusOwner === false) ? (
-											<DropdownMenu aria-label="Static Actions">
+											<DropdownMenu aria-label="Static Actions" className="rounded-xl shadow-2xl">
 												<DropdownItem
 													key="profile"
 													onClick={() => navigate('/profile')}
+													className="rounded-lg text-gray-800 hover:bg-blue-50"
 												>
-													<i className="fas fa-user mr-2"></i>
+													<i className="fas fa-user mr-3 text-blue-600"></i>
 													<span>Thông tin tài khoản</span>
 												</DropdownItem>
 												<DropdownItem
 													key="ticket"
 													onClick={() => navigate('/my-ticket')}
+													className="rounded-lg text-gray-800 hover:bg-blue-50"
 												>
-													<i className="fas fa-ticket-alt mr-2"></i>
+													<i className="fas fa-bed mr-3 text-blue-600"></i>
 													<span>Phòng của tôi</span>
 												</DropdownItem>
 												<DropdownItem
 													onClick={logout}
-													color="danger"
+													className="rounded-lg text-red-600 hover:bg-red-50"
 												>
-													<i className="fas fa-power-off mr-2"></i>
+													<i className="fas fa-sign-out-alt mr-3"></i>
 													<span>Đăng xuất</span>
 												</DropdownItem>
 											</DropdownMenu>
 										) : (
-											<DropdownMenu aria-label="Static Actions">
-											<DropdownItem
+											<DropdownMenu aria-label="Static Actions" className="rounded-xl shadow-2xl">
+												<DropdownItem
 													key="profile"
 													onClick={() => navigate('/profile')}
+													className="rounded-lg text-gray-800 hover:bg-blue-50"
 												>
-													<i className="fas fa-user mr-2"></i>
+													<i className="fas fa-user mr-3 text-blue-600"></i>
 													<span>Thông tin tài khoản</span>
 												</DropdownItem>
 												<DropdownItem
 													key="review"
 													onClick={() => navigate('/admin')}
+													className="rounded-lg text-gray-800 hover:bg-blue-50"
 												>
-													<i className="fas fa-comment-dots mr-2"></i>
+													<i className="fas fa-cog mr-3 text-blue-600"></i>
 													<span>Quản lý hệ thống</span>
 												</DropdownItem>
 												<DropdownItem
 													onClick={logout}
-													color="danger"
+													className="rounded-lg text-red-600 hover:bg-red-50"
 												>
-													<i className="fas fa-power-off mr-2"></i>
+													<i className="fas fa-sign-out-alt mr-3"></i>
 													<span>Đăng xuất</span>
 												</DropdownItem>
 											</DropdownMenu>
@@ -188,17 +195,17 @@ function Header({showText, showSearch = false}) {
 							) : (
 								<>
 									<Button
-										variant="bordered"
+										variant="shadow"
 										color="primary"
-										className="rounded-xl bg-slate-50 font-bold"
+										className="rounded-full bg-white px-5 py-2 font-semibold text-blue-700 shadow-lg transition hover:bg-gray-100"
 										onClick={openRegister}
 									>
 										Đăng ký
 									</Button>
 									<Button
-										variant="bordered"
+										variant="shadow"
 										color="primary"
-										className="rounded-xl bg-slate-50 font-bold"
+										className="rounded-full bg-white/10 px-5 py-2 font-semibold text-white backdrop-blur-sm transition hover:bg-white/20"
 										onClick={openLogin}
 									>
 										Đăng nhập
@@ -209,26 +216,29 @@ function Header({showText, showSearch = false}) {
 					</div>
 				</header>
 
-				<main className={cn('bg-blue-800 text-left text-white')}>
+				<main className={cn('text-left text-white')}>
 					{showText && (
-						<>
-							<h1 className="pb-2 pt-8 text-4xl font-bold">Tìm chỗ nghỉ tiếp theo</h1>
-							<p className="mt-2 pb-16 text-lg">Tìm ưu đãi khách sạn, chỗ nghỉ dạng nhà và nhiều hơn nữa...</p>
-						</>
+						<div className="mx-auto max-w-4xl pt-12 pb-20 text-center">
+							<h1 className="text-5xl font-extrabold tracking-tight drop-shadow-xl sm:text-6xl">
+								Kỳ nghỉ trong mơ bắt đầu từ đây
+							</h1>
+							<p className="mt-4 text-xl font-light text-white/90 drop-shadow-lg">
+								Khám phá những chỗ nghỉ sang trọng, tiện nghi và đẳng cấp nhất
+							</p>
+						</div>
 					)}
-
 					{showSearch && (
-						<div className="bottom-[-20px] w-full xl:absolute xl:w-[80%] 2xl:w-[80%]">
-							<div className="bg-ye flex w-full flex-col items-center justify-center gap-1 rounded-xl bg-accent p-1 shadow-lg xl:flex-row">
+						<div className="bottom-[-28px] left-1/2 w-full -translate-x-1/2 xl:absolute xl:w-[80%] 2xl:w-[80%]">
+							<div className="flex w-full flex-col items-center justify-center gap-2 rounded-2xl bg-white/90 p-3 shadow-2xl backdrop-blur-md xl:flex-row">
 								<Select
 									className="flex-4 xl:flex-3 border-none"
 									variant="flat"
-									radius="sm"
+									radius="lg"
 									aria-label={'city'}
 									selectedKeys={[destination]}
 									onChange={e => setDestination(e.target.value)}
 									placeholder="Bạn muốn đến đâu?"
-									startContent={<i className="fas fa-bed text-gray-500"></i>}
+									startContent={<i className="fas fa-map-marker-alt text-blue-600"></i>}
 								>
 									{PROVINCES.map(x => (
 										<SelectItem
@@ -241,7 +251,7 @@ function Header({showText, showSearch = false}) {
 								</Select>
 
 								<DateRangePicker
-									radius="sm"
+									radius="lg"
 									variant="flat"
 									visibleMonths={2}
 									className="flex-5 border-none"
@@ -255,28 +265,30 @@ function Header({showText, showSearch = false}) {
 									offset={10}
 								>
 									<PopoverTrigger>
-										<Button className={cn('flex-3 w-full rounded-lg border-none bg-white xl:min-w-[250px]', havePet && 'min-w-[300px]')}>
-											Phòng {personCount} người · {roomCount} phòng {havePet && '· Vật nuôi'}
+										<Button className={cn('flex-3 w-full rounded-xl border-none bg-gray-100 xl:min-w-[250px]', havePet && 'min-w-[300px]')}>
+											<div className="flex items-center gap-2">
+												<i className="fas fa-users text-blue-600"></i>
+												<span>Phòng {personCount} người · {roomCount} phòng {havePet && '· Vật nuôi'}</span>
+											</div>
 											<i
-												className="fa fa-caret-down tet-xl text-[20px] text-grey-500"
+												className="fa fa-chevron-down text-gray-500"
 												aria-hidden="true"
 											></i>
 										</Button>
 									</PopoverTrigger>
-									<PopoverContent>
-										<div className="flex w-[300px] flex-col gap-2 p-4">
-											<div className="flex w-full">
-												<div className="flex w-full items-center justify-between gap-20">
-													<p className="text-small font-bold">Số người mỗi phòng</p>
-												</div>
+									<PopoverContent className="rounded-2xl shadow-xl">
+										<div className="flex w-[320px] flex-col gap-4 p-5">
+											<div className="flex items-center justify-between">
+												<p className="font-semibold text-gray-800">Số người mỗi phòng</p>
 												<NumberInput
-													minWidth={'100px'}
+													size="sm"
 													onChange={e => setPersonCount(e)}
 													value={personCount}
 													max={1000}
 													min={1}
+													className="w-28"
 												>
-													<NumberInputField />
+													<NumberInputField className="text-center" />
 													<NumberInputStepper>
 														<NumberIncrementStepper />
 														<NumberDecrementStepper />
@@ -284,18 +296,17 @@ function Header({showText, showSearch = false}) {
 												</NumberInput>
 											</div>
 
-											<div className="flex w-full">
-												<div className="flex w-full items-center justify-between gap-20">
-													<p className="text-small font-bold">Số phòng</p>
-												</div>
+											<div className="flex items-center justify-between">
+												<p className="font-semibold text-gray-800">Số phòng</p>
 												<NumberInput
-													minWidth={'100px'}
+													size="sm"
 													onChange={e => setRoomCount(e)}
 													value={roomCount}
 													max={1000}
 													min={1}
+													className="w-28"
 												>
-													<NumberInputField />
+													<NumberInputField className="text-center" />
 													<NumberInputStepper>
 														<NumberIncrementStepper />
 														<NumberDecrementStepper />
@@ -305,14 +316,13 @@ function Header({showText, showSearch = false}) {
 
 											<Divider />
 
-											<div className="flex w-full">
-												<div className="flex w-full items-center justify-between gap-20">
-													<p className="text-small font-bold">Vật nuôi</p>
-												</div>
+											<div className="flex items-center justify-between">
+												<p className="font-semibold text-gray-800">Vật nuôi</p>
 												<Switch
 													isSelected={havePet}
 													onChange={() => setHavePet(!havePet)}
-													color={'blue-base'}
+													color="primary"
+													size="lg"
 												/>
 											</div>
 										</div>
@@ -321,9 +331,9 @@ function Header({showText, showSearch = false}) {
 
 								<Button
 									onClick={() => handleSearch()}
-									variant="solid"
-									radius="sm"
-									className="w-full min-w-[200px] bg-blue-600 px-4 py-2 text-white xl:w-fit"
+									variant="shadow"
+									radius="lg"
+									className="w-full min-w-[200px] bg-gradient-to-r from-blue-600 to-blue-500 px-6 py-3 text-lg font-bold text-white shadow-lg transition hover:from-blue-700 hover:to-blue-600 xl:w-fit"
 								>
 									Tìm kiếm
 								</Button>

@@ -78,8 +78,12 @@ router.get("/", async (req, res) => {
         if (bossId) {
             query.bossId = bossId;
         }
-        const pageNumber = parseInt(page, 10);
-        const limitNumber = parseInt(limit, 10);
+        let pageNumber = parseInt(page, 10);
+        let limitNumber = parseInt(limit, 10);
+
+        // Ensure page and limit are positive integers
+        if (isNaN(pageNumber) || pageNumber < 1) pageNumber = 1;
+        if (isNaN(limitNumber) || limitNumber < 1) limitNumber = 10;
 
         const total = await User.countDocuments(query);
         const users = await User.find(query)

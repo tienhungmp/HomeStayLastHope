@@ -340,21 +340,32 @@ function GridBlurredBackdrop() {
 				<chakra.h3
 					fontFamily={'Work Sans'}
 					fontWeight={'bold'}
-					fontSize={25}
+					fontSize={{base: 'lg', md: '2xl'}}
+					letterSpacing={'wider'}
 					textTransform={'uppercase'}
-					color={'blue.400'}
+					bgGradient="linear(to-r, teal.400, blue.500)"
+					bgClip="text"
+					mb={2}
 				>
 					Khách hàng đánh giá về chúng tôi
 				</chakra.h3>
 				<chakra.h2
 					margin={'auto'}
-					width={'70%'}
+					maxW={{base: '90%', md: '70%'}}
 					fontFamily={'Inter'}
 					fontWeight={'medium'}
-					color={useColorModeValue('gray.500', 'gray.400')}
+					fontSize={{base: 'sm', md: 'md'}}
+					color={useColorModeValue('gray.600', 'gray.400')}
+					lineHeight="tall"
 				>
-					{`Đánh giá dựa trên `}
-					<chakra.strong color={useColorModeValue('gray.700', 'gray.50')}>{count}</chakra.strong> lượt khách đã đặt phòng
+					Đánh giá dựa trên{' '}
+					<chakra.strong
+						color={useColorModeValue('teal.600', 'teal.300')}
+						fontWeight={'semibold'}
+					>
+						{count}
+					</chakra.strong>{' '}
+					lượt khách đã đặt phòng
 				</chakra.h2>
 			</Box>
 			<SimpleGrid
@@ -375,6 +386,89 @@ function GridBlurredBackdrop() {
 					/>
 				))}
 			</SimpleGrid>
+
+			{/* Thêm phần CTA cuối trang */}
+			<Box
+				as="section"
+				w="full"
+				position="relative"
+				overflow="hidden"
+				py={{base: 20, md: 32}}
+				mt={16}
+				roundedTop="3xl"
+			>
+				{/* Animated background with travel-themed images */}
+				<Flex
+					position="absolute"
+					inset={0}
+					zIndex={0}
+				>
+					<Image
+						src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1920&q=80"
+						alt="Beach"
+						objectFit="cover"
+						w="full"
+						h="full"
+					/>
+				</Flex>
+
+				{/* Gradient overlay for readability */}
+				<Box
+					position="absolute"
+					inset={0}
+					bgGradient="linear(to-b, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.5) 100%)"
+					zIndex={1}
+				/>
+
+				<Container
+					maxW="full"
+					textAlign="center"
+					position="relative"
+					zIndex={2}
+					px={0}
+				>
+					<chakra.h2
+						fontFamily="Inter"
+						fontSize={{base: '3xl', md: 'full'}}
+						fontWeight="extrabold"
+						mb={4}
+						color="white"
+						textShadow="0 2px 4px rgba(0,0,0,0.4)"
+					>
+						Khám phá thế giới, bắt đầu hành trình của bạn!
+					</chakra.h2>
+					<chakra.p
+						fontSize={{base: 'lg', md: 'xl'}}
+						color="whiteAlpha.900"
+						maxW="2xl"
+						mx="auto"
+						mb={10}
+						textShadow="0 1px 2px rgba(0,0,0,0.3)"
+					>
+						Từ những bãi biển hoang sơ đến thành phố sôi động, chúng tôi mang đến trải nghiệm lưu trú tuyệt vời. Đặt phòng ngay để nhận ưu đãi độc quyền!
+					</chakra.p>
+					<Button
+						size="lg"
+						rounded="full"
+						px={10}
+						colorScheme="teal"
+						bg="teal.400"
+						_hover={{bg: 'teal.500', transform: 'scale(1.05)'}}
+						_active={{bg: 'teal.600'}}
+						boxShadow="0 10px 25px rgba(0,0,0,0.3)"
+						leftIcon={
+							<Icon viewBox="0 0 24 24" w={5} h={5}>
+								<path
+									fill="currentColor"
+									d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"
+								/>
+							</Icon>
+						}
+					>
+						Bắt đầu khám phá
+					</Button>
+				</Container>
+			</Box>
 		</Flex>
 	)
 }
