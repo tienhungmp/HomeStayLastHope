@@ -30,6 +30,24 @@ const TicketSchema = new mongoose.Schema({
     review: { type: String, required: false },
     star: { type: Number, required: false },
     isShow: { type: Boolean, required: false },
+    isShowReview: { type: Boolean, required: false, default: true },
+});
+
+// Ensure isShowReview defaults to true for new documents and updates
+TicketSchema.pre('save', function (next) {
+    if (this.isShowReview === undefined || this.isShowReview === null) {
+        this.isShowReview = true;
+    }
+    next();
+});
+
+// Also apply the same default for existing documents on update
+TicketSchema.pre('findOneAndUpdate', function (next) {
+    const update = this.getUpdate();
+    if (update && (update.isShowReview === undefined || update.isShowReview === null)) {
+        update.isShowReview = true;
+    }
+    next();
 });
 
 export default mongoose.model("Ticket", TicketSchema);

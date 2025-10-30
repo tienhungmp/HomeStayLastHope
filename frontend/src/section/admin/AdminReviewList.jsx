@@ -83,10 +83,37 @@ export default function AdminReviewList() {
 				</Button>
 			),
 		},
+		{
+			id: 'hide',
+			label: 'Ẩn/Hiện',
+			renderCell: row => (
+				<Button
+					size="sm"
+					color={row.isHidden ? 'warning' : 'success'}
+					onClick={() => handleToggleHide(row._id, !row.isShowReview)}
+				>
+					{row.isShowReview ? 'Hiện' : 'Ẩn'}
+				</Button>
+			),
+		},
 	]
 	function handleChangeStatus(id, status) {
 		factories
 			.updatePinReview(id, status)
+			.then(e => {
+				ToastInfo(e.message)
+				loadList()
+			})
+			.catch(error => {
+				const dataE = error.response.data.message
+				loadList()
+				ToastNotiError(dataE)
+			})
+	}
+
+	function handleToggleHide(id, status) {
+		factories
+			.updateHiddedReview({id, status})
 			.then(e => {
 				ToastInfo(e.message)
 				loadList()

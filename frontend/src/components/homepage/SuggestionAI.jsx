@@ -16,24 +16,25 @@ function SuggestionAI() {
 				id: auth._id,
 			})
 			.then(data => {
-				setList(data.recommendations)
+				setList(data.accommodations)
 			})
 	}, [auth])
 	if (!auth) return <div className="mt-10"></div>
+
 	return (
 		<div>
 			<section className="container mx-auto py-16">
 				<h2 className="mb-8 text-2xl font-extrabold">Bạn có quan tâm đến những chỗ nghỉ này?</h2>
-				{list.length < 1 && <div className="mt-0 w-full">Nhận nhiều gợi ý các phòng phù hợp hơn khi đặt phòng</div>}
+				{list && list.length < 1 && <div className="mt-0 w-full">Nhận nhiều gợi ý các phòng phù hợp hơn khi đặt phòng</div>}
 				<div className="grid grid-cols-3 gap-8">
-					{list.length > 1 &&
+					{list && list.length > 1 &&
 						list.map(item => (
 							<CardDestination
-								name="Da Nang Resort"
+								name={item?.address}
 								room={item?.name}
-								src={item?.accommodationId?.images?.[0] || images?.[0]}
-								province={item?.accommodationId?.city}
-								accommodationId={item.accommodationId._id}
+								src={item?.images[0] || images?.[0]}
+								province={item?.address}
+								accommodationId={item.accommodationId}
 								price={item?.pricePerNight}
 							/>
 						))}

@@ -44,61 +44,50 @@ async function getAllUniqueAmenities(tickets, top = 5) {
 
 router.get('/', async (req, res) => {
     try {
-        const { id } = req.query;
+        // Lấy 5 accommodations ngẫu nhiên không trùng lặp
+        const accommodations = await Room.aggregate([
+            {
+                $lookup: {
+                    from: 'accommodations',
+                    localField: 'accommodationId',
+                    foreignField: '_id',
+                    as: 'accommodation'
+                }
+            },
+            { $unwind: '$accommodation' },
+            {
+                $group: {
+                    _id: '$accommodation._id',
+                    accommodationId: { $first: '$accommodation._id' },
+                    name: { $first: '$accommodation.name' },
+                    city: { $first: '$accommodation.city' },
+                    address: { $first: '$accommodation.address' },
+                    images: { $first: '$accommodation.images' },
+                    amenities: { $first: '$accommodation.amenities' },
+                    rating: { $first: '$accommodation.rating' },
+                    pricePerNight: { $first: '$pricePerNight' }
+                }
+            },
+            { $sample: { size: 6 } },
+            {
+                $project: {
+                    _id: 0,
+                    accommodationId: 1,
+                    name: 1,
+                    city: 1,
+                    address: 1,
+                    images: 1,
+                    amenities: 1,
+                    rating: 1,
+                    pricePerNight: 1
+                }
+            }
+        ]);
 
-        // Lấy lịch sử vé đã đặt của người dùng
-        const tickets = await Ticket.find({
-            userId: id
-        }).populate({
-            path: 'accommodation',
-            select: 'city amenities',
-        }).populate({
-            path: 'rooms.roomId',
-            select: 'pricePerNight'
-        });
-
-        if (tickets.length === 0) {
-            return res.json({ recommendations: [], message: 'Người dùng chưa có lượt đặt phòng nào.' });
-        }
-
-        //1 Lấy giá phòng trung bình
-        const avgPrice = await averageTickets(tickets)
-
-        //2 Tập hợp các địa điểm thanh phố với số lần xuất hiện
-        const citylist = await getCitiesWithCount(tickets)
-
-        // 3. Lấy ra các tiện ích xuất hiện nhiều nhất trong các lượt
-        const topAmenities = await getAllUniqueAmenities(tickets, 5);
-        // res.json({ recommendations: tickets });
-
-        const allRooms = await Room.find().populate('accommodationId').exec()
-
-        const recommendations = allRooms
-            .map(room => {
-                // Xử lý tính tương đồng về giá
-                const priceSimilarity = 1 - Math.abs(room.pricePerNight - avgPrice) / avgPrice;
-
-
-                // Xử lý tính tương đồng về thành phố
-                const accommodationDetail = room.accommodationId;
-                const citySimilarity = citylist.includes(accommodationDetail.city) ? 1 : 0;
-
-                // Độ tương đồng về tiện ích
-                const amenitiesSimilarity = accommodationDetail.amenities.filter(a => topAmenities.includes(a)).length / topAmenities.length;
-
-                // Tổng hợp độ tương đồng
-                const totalSimilarity = (priceSimilarity + citySimilarity + amenitiesSimilarity) / 3;
-                return { room, similarity: totalSimilarity };
-            })
-            .filter(({ similarity }) => similarity > 0.5) // Lọc những lượt có độ tương đồng thấp hơn 0.5
-            .sort((a, b) => b.similarity - a.similarity) // Sắp xếp theo độ tương đồng
-            .slice(0, 6); // Giới hạn 6 chuyến phù hợp nhất
-
-        res.json({ recommendations: recommendations.map(r => r.room) });
-
+        res.json({ accommodations });
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: 'Hệ thống lỗi', error: error.message });
+        console.error('Error fetching random accommodations:', error);
+        res.status(500).json({ message: 'Internal server error' });
     }
 });
 export default router;

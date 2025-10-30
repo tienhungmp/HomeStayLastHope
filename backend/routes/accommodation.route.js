@@ -421,7 +421,7 @@ router.get("/:id", async (req, res) => {
                 "name capacity quantity pricePerNight amenities description images",
             );
 
-        const tickets = await Ticket.find({ accommodation: id, star: { $gt: 0 } }).populate('userId').populate('accommodation');
+        const tickets = await Ticket.find({ accommodation: id, star: { $gt: 0 }, isShowReview: true }).populate('userId').populate('accommodation');
 
         if (!accommodation) {
             return res.status(404).json({ message: "Accommodation not found" });

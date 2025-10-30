@@ -65,6 +65,13 @@ export const factories = {
             },
         });
     },
+    updateHiddedReview: (data) => {
+        return ApiOperation.request({
+            url: ApiConstants.TICKET + '/update-review-show/',
+            method: 'POST',
+            data: data
+        })
+    },
     getReviews: (params) => {
         return ApiOperation.request({
             url: ApiConstants.TICKET + '/reviews',
