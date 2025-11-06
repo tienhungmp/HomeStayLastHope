@@ -2,11 +2,38 @@ import ApiConstants from '../adapter/ApiConstants';
 import ApiOperation from '../adapter/ApiOperation';
 
 export const factories = {
+    getAllHosts: () => {
+        return ApiOperation.request({
+            url: ApiConstants.ACCOMMODATIONS + '/list-host',
+            method: 'GET',
+        });
+    },
     getAdminListAccommodation: (params) => {
         return ApiOperation.request({
             url: ApiConstants.ACCOMMODATIONS + '/admin',
             method: 'GET',
             params: params,
+        });
+    },
+    getHomestaysByHost: (data) => {
+        return ApiOperation.request({
+            url: ApiConstants.ACCOMMODATIONS + '/list-accommodation',
+            method: 'POST',
+            data: data,
+        });
+    },
+    getHomestaysByHost: (data) => {
+        return ApiOperation.request({
+            url: ApiConstants.ACCOMMODATIONS + '/list-accommodation',
+            method: 'POST',
+            data: data,
+        });
+    },
+    getHomestayStats: (data) => {
+        return ApiOperation.request({
+            url: ApiConstants.ACCOMMODATIONS + '/detail-analys-host',
+            method: 'POST',
+            data: data,
         });
     },
     getRecommend: (data) => {

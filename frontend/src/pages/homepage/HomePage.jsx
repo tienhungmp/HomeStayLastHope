@@ -393,33 +393,95 @@ function GridBlurredBackdrop() {
 				w="full"
 				position="relative"
 				overflow="hidden"
-				py={{base: 20, md: 32}}
+				py={{base: 24, md: 40}}
 				mt={16}
 				roundedTop="3xl"
 			>
-				{/* Animated background with travel-themed images */}
+				{/* Animated background with multiple travel-themed images */}
 				<Flex
 					position="absolute"
 					inset={0}
 					zIndex={0}
 				>
+					{/* Slide 1: Beach */}
 					<Image
 						src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1920&q=80"
 						alt="Beach"
 						objectFit="cover"
 						w="full"
 						h="full"
+						position="absolute"
+						animation="slideShow 24s infinite"
+						opacity={1}
+						sx={{
+							'@keyframes slideShow': {
+								'0%': { opacity: 1 },
+								'25%': { opacity: 1 },
+								'33%': { opacity: 0 },
+								'91%': { opacity: 0 },
+								'100%': { opacity: 1 },
+							},
+						}}
+					/>
+					{/* Slide 2: Mountain */}
+					<Image
+						src="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?auto=format&fit=crop&w=1920&q=80"
+						alt="Mountain"
+						objectFit="cover"
+						w="full"
+						h="full"
+						position="absolute"
+						animation="slideShow2 24s infinite"
+						opacity={0}
+						sx={{
+							'@keyframes slideShow2': {
+								'0%': { opacity: 0 },
+								'25%': { opacity: 0 },
+								'33%': { opacity: 1 },
+								'58%': { opacity: 1 },
+								'66%': { opacity: 0 },
+								'100%': { opacity: 0 },
+							},
+						}}
+					/>
+					{/* Slide 3: City */}
+					<Image
+						src="https://images.unsplash.com/photo-1514565131-fce0801e5785?auto=format&fit=crop&w=1920&q=80"
+						alt="City"
+						objectFit="cover"
+						w="full"
+						h="full"
+						position="absolute"
+						animation="slideShow3 24s infinite"
+						opacity={0}
+						sx={{
+							'@keyframes slideShow3': {
+								'0%': { opacity: 0 },
+								'58%': { opacity: 0 },
+								'66%': { opacity: 1 },
+								'91%': { opacity: 1 },
+								'100%': { opacity: 0 },
+							},
+						}}
+					/>
+					{/* Ken-burns zoom on active image */}
+					<Box
+						position="absolute"
+						inset={0}
+						animation="kenburns 24s infinite"
+						sx={{
+							'@keyframes kenburns': {
+								'0%': { transform: 'scale(1) translate(0, 0)' },
+								'100%': { transform: 'scale(1.15) translate(-2%, 2%)' },
+							},
+						}}
 					/>
 				</Flex>
 
 				{/* Gradient overlay for readability */}
-				<Box
-					position="absolute"
-					inset={0}
-					bgGradient="linear(to-b, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.5) 100%)"
-					zIndex={1}
+				<Box position="absolute" inset={0}
+					bgGradient="linear(to-b, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.6) 100%)" zIndex={1}
 				/>
-
 				<Container
 					maxW="full"
 					textAlign="center"
@@ -429,41 +491,87 @@ function GridBlurredBackdrop() {
 				>
 					<chakra.h2
 						fontFamily="Inter"
-						fontSize={{base: '3xl', md: 'full'}}
+						fontSize={{base: '4xl', md: '6xl'}}
 						fontWeight="extrabold"
-						mb={4}
+						mb={6}
 						color="white"
-						textShadow="0 2px 4px rgba(0,0,0,0.4)"
+						textShadow="0 2px 8px rgba(0,0,0,0.5)"
+						letterSpacing="tight"
+						lineHeight="short"
 					>
-						Khám phá thế giới, bắt đầu hành trình của bạn!
+						<chakra.span
+							display="block"
+							animation="fadeInDown 1s ease-out"
+							sx={{
+								'@keyframes fadeInDown': {
+									'0%': { opacity: 0, transform: 'translateY(-20px)' },
+									'100%': { opacity: 1, transform: 'translateY(0)' },
+								},
+							}}
+						>
+							Khám phá thế giới,
+						</chakra.span>
+						<chakra.span
+							display="block"
+							color="teal.300"
+							animation="fadeInUp 1s ease-out 0.3s both"
+							sx={{
+								'@keyframes fadeInUp': {
+									'0%': { opacity: 0, transform: 'translateY(20px)' },
+									'100%': { opacity: 1, transform: 'translateY(0)' },
+								},
+							}}
+						>
+							bắt đầu hành trình của bạn!
+						</chakra.span>
 					</chakra.h2>
 					<chakra.p
 						fontSize={{base: 'lg', md: 'xl'}}
 						color="whiteAlpha.900"
 						maxW="2xl"
 						mx="auto"
-						mb={10}
-						textShadow="0 1px 2px rgba(0,0,0,0.3)"
+						mb={12}
+						textShadow="0 1px 3px rgba(0,0,0,0.4)"
+						animation="fadeIn 1.5s ease-out 0.6s both"
+						sx={{
+							'@keyframes fadeIn': {
+								'0%': { opacity: 0 },
+								'100%': { opacity: 1 },
+							},
+						}}
 					>
 						Từ những bãi biển hoang sơ đến thành phố sôi động, chúng tôi mang đến trải nghiệm lưu trú tuyệt vời. Đặt phòng ngay để nhận ưu đãi độc quyền!
 					</chakra.p>
 					<Button
 						size="lg"
 						rounded="full"
-						px={10}
+						px={12}
+						py={8}
 						colorScheme="teal"
 						bg="teal.400"
-						_hover={{bg: 'teal.500', transform: 'scale(1.05)'}}
+						_hover={{
+							bg: 'teal.500',
+							transform: 'scale(1.08)',
+							boxShadow: '0 15px 35px rgba(0,0,0,0.4)',
+						}}
 						_active={{bg: 'teal.600'}}
-						boxShadow="0 10px 25px rgba(0,0,0,0.3)"
+						boxShadow="0 12px 30px rgba(0,0,0,0.35)"
 						leftIcon={
-							<Icon viewBox="0 0 24 24" w={5} h={5}>
+							<Icon viewBox="0 0 24 24" w={6} h={6}>
 								<path
 									fill="currentColor"
 									d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"
 								/>
 							</Icon>
 						}
+						animation="pulse 2s infinite"
+						sx={{
+							'@keyframes pulse': {
+								'0%': { transform: 'scale(1)' },
+								'50%': { transform: 'scale(1.05)' },
+								'100%': { transform: 'scale(1)' },
+							},
+						}}
 					>
 						Bắt đầu khám phá
 					</Button>

@@ -7,7 +7,7 @@ import Accommodation from "../models/schemas/Accommodation.schema.js";
 import Policy from "../models/schemas/Policy.schema.js";
 import Room from "../models/schemas/Room.schema.js";
 import Ticket from "../models/schemas/Ticket.schema.js";
-
+import User from "../models/schemas/user.schema.js";
 // Helper method
 const getPricePerNight = (accommodation, isAscending) => {
     if ([0, 1, 2].includes(accommodation.type)) {
@@ -17,6 +17,56 @@ const getPricePerNight = (accommodation, isAscending) => {
         return isAscending ? Math.min(...roomPrices) : Math.max(...roomPrices);
     }
 };
+
+router.get("/list-host", async (req, res) => {
+    try {
+        // Lấy danh sách ownerId từ collection Accommodation
+        const accommodationOwners = await Accommodation.distinct("ownerId");
+
+        if (accommodationOwners.length === 0) {
+            return res.status(200).json([]);
+        }
+
+        // Tìm các user có _id nằm trong danh sách ownerId và status = 1
+        const hosts = await User.find({
+            _id: { $in: accommodationOwners },
+            status: 1
+        });
+
+        const formattedHosts = hosts.map(host => ({
+            ...host,
+            _id: host._id,
+            name: host.fullName,
+            email: host.email
+        }));
+
+        res.status(200).json(formattedHosts);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({
+            message: "Error getting host users",
+            error: error.message,
+        });
+    }
+});
+
+router.post("/list-accommodation", async (req, res) => {
+    try {
+        const { ownerId } = req.body;
+
+        const accommodations = await Accommodation.find({ ownerId }).select("_id name");
+
+        const result = accommodations.map(acc => ({
+            _id: acc._id.toString(),
+            name: acc.name
+        }));
+
+        res.status(200).json(result);
+    } catch (error) {
+        console.error("Error fetching accommodations by owner:", error);
+        res.status(500).json({ message: "Internal server error" });
+    }
+});
 
 router.post("/", async (req, res) => {
     try {
@@ -308,45 +358,66 @@ router.get("/", async (req, res) => {
 
 router.get("/admin", async (req, res) => {
     try {
-        const { ownerId, page = "1", limit = "10", keyword, city } = req.query;
-
-        const pageNumber = parseInt(page, 10);
-        const limitNumber = parseInt(limit, 10);
-
-        let query = {};
-        if (ownerId) {
-            query.ownerId = ownerId;
-        }
-        if (keyword) {
-            query.$or = [
-                { name: { $regex: new RegExp(keyword, "i") } },
-                { city: { $regex: new RegExp(keyword, "i") } },
-            ];
-        }
-        if (city) {
-            query.city = city;
-        }
-
-        const total = await Accommodation.countDocuments(query);
-        const accommodations = await Accommodation.find(query)
-            .skip((pageNumber - 1) * limitNumber)
-            .limit(limitNumber)
-            .populate("policy");
-
-        res.status(200).json({
-            accommodations,
-            pagination: {
-                total,
-                pages: Math.ceil(total / limitNumber),
-                pageSize: limitNumber,
-                current: pageNumber,
-            },
-        });
+      const { ownerId, page = "1", limit = "10", keyword, city } = req.query;
+      const pageNumber = parseInt(page, 10);
+      const limitNumber = parseInt(limit, 10);
+  
+      let query = {};
+  
+      if (ownerId) {
+        query.ownerId = ownerId;
+      }
+  
+      if (keyword) {
+        query.$or = [
+          { name: { $regex: new RegExp(keyword, "i") } },
+          { city: { $regex: new RegExp(keyword, "i") } },
+        ];
+      }
+  
+      if (city) {
+        query.city = city;
+      }
+  
+      const total = await Accommodation.countDocuments(query);
+      const accommodations = await Accommodation.find(query)
+        .skip((pageNumber - 1) * limitNumber)
+        .limit(limitNumber)
+        .populate("policy")
+        .lean();
+  
+      // Lấy thông tin host cho mỗi accommodation
+      const accommodationsWithHost = await Promise.all(
+        accommodations.map(async (accommodation) => {
+          const host = await mongoose.model("User").findById(accommodation.ownerId)
+            .select("fullName email profilePictureUrl")
+            .lean();
+          
+          return {
+            ...accommodation,
+            host: host ? {
+              fullName: host.fullName,
+              email: host.email,
+              profilePictureUrl: host.profilePictureUrl
+            } : null
+          };
+        })
+      );
+  
+      res.status(200).json({
+        accommodations: accommodationsWithHost,
+        pagination: {
+          total,
+          pages: Math.ceil(total / limitNumber),
+          pageSize: limitNumber,
+          current: pageNumber,
+        },
+      });
     } catch (error) {
-        console.error("Error searching accommodations for admin:", error);
-        res.status(500).json({ message: "Internal server error" });
+      console.error("Error searching accommodations for admin:", error);
+      res.status(500).json({ message: "Internal server error" });
     }
-});
+  });
 router.get("/managed-verification", async (req, res) => {
     try {
         const { page = "1", limit = "10", isVerified, keyword, city } = req.query;
@@ -775,7 +846,11 @@ router.get("/rooms/admin", async (req, res) => {
         const total = await Room.countDocuments(query);
         const rooms = await Room.find(query)
             .skip((pageNumber - 1) * limitNumber)
-            .limit(limitNumber);
+            .limit(limitNumber)
+            .populate({
+                path: "accommodationId",
+                select: "name city address avatar ownerId"
+            });
 
         res.status(200).json({
             rooms,
@@ -875,5 +950,171 @@ router.post("/available-rooms", async (req, res) => {
         });
     }
 });
+ 
+
+router.post("/detail-analys-host", async (req, res) => {
+    try {
+        const { accommodationId, filter = 'day' } = req.body;
+
+        // Validate accommodationId
+        if (!accommodationId) {
+            return res.status(400).json({ message: "accommodationId is required" });
+        }
+        
+        if (!mongoose.Types.ObjectId.isValid(accommodationId)) {
+            return res.status(400).json({ message: "Invalid accommodation ID" });
+        }
+
+        // Validate filter
+        if (!['day', 'week', 'month'].includes(filter)) {
+            return res.status(400).json({ 
+                message: "Invalid filter. Must be 'day', 'week', or 'month'" 
+            });
+        }
+
+        const now = new Date();
+        let statistics;
+
+        switch (filter) {
+            case 'day':
+                statistics = await getDayStatistics(accommodationId, now);
+                break;
+            case 'week':
+                statistics = await getWeekStatistics(accommodationId, now);
+                break;
+            case 'month':
+                statistics = await getMonthStatistics(accommodationId, now);
+                break;
+        }
+
+        return res.status(200).json({
+            success: true,
+            filter,
+            data: statistics,
+        });
+    } catch (error) {
+        console.error("Error fetching accommodation statistics:", error);
+        return res.status(500).json({ 
+            success: false,
+            message: "Internal server error",
+            error: error.message 
+        });
+    }
+});
+
+// Helper function: Get day statistics (by hour - last 24 hours)
+const getDayStatistics = async (accommodationId, now) => {
+    const revenue = [];
+    const booking = [];
+
+    // Get data for last 24 hours, grouped by hour
+    for (let i = 23; i >= 0; i--) {
+        const hourEnd = new Date(now);
+        hourEnd.setHours(now.getHours() - i, 59, 59, 999);
+
+        const hourStart = new Date(hourEnd);
+        hourStart.setMinutes(0, 0, 0);
+
+        const tickets = await Ticket.find({
+            accommodation: accommodationId,
+            status: { $ne: 0 }, // Exclude cancelled bookings
+            createdAt: {
+                $gte: hourStart,
+                $lte: hourEnd,
+            },
+        });
+
+        const hourRevenue = tickets.reduce((sum, t) => sum + (t.totalPrice || 0), 0);
+        const hourLabel = `${hourStart.getHours()}:00`;
+
+        revenue.push({ label: hourLabel, value: hourRevenue });
+        booking.push({ label: hourLabel, value: tickets.length });
+    }
+
+    return { revenue, booking };
+};
+
+// Helper function: Get week statistics (last 4 weeks)
+const getWeekStatistics = async (accommodationId, now) => {
+    const weeks = [];
+    const revenue = [];
+    const booking = [];
+
+    for (let i = 3; i >= 0; i--) {
+        const weekEnd = new Date(now);
+        weekEnd.setDate(weekEnd.getDate() - (i * 7));
+        weekEnd.setHours(23, 59, 59, 999);
+
+        const weekStart = new Date(weekEnd);
+        weekStart.setDate(weekStart.getDate() - 6);
+        weekStart.setHours(0, 0, 0, 0);
+
+        // Convert dates to ISO string format for comparison
+        const weekStartStr = weekStart.toISOString();
+        const weekEndStr = weekEnd.toISOString();
+
+        const tickets = await Ticket.find({
+            accommodation: accommodationId,
+            status: { $ne: 0 },
+            fromDate: {
+                $gte: weekStartStr,
+                $lte: weekEndStr,
+            },
+        });
+
+        const weekRevenue = tickets.reduce((sum, t) => sum + (t.totalPrice || 0), 0);
+        const weekLabel = `Tuần ${4 - i}`;
+
+        revenue.push({ label: weekLabel, value: weekRevenue });
+        booking.push({ label: weekLabel, value: tickets.length });
+    }
+
+    return { revenue, booking };
+};
+
+
+// Helper function: Get month statistics (last 4 months)
+const getMonthStatistics = async (accommodationId, now) => {
+    const months = [];
+    const revenue = [];
+    const booking = [];
+
+    const monthNames = [
+        'Tháng 1', 'Tháng 2', 'Tháng 3', 'Tháng 4',
+        'Tháng 5', 'Tháng 6', 'Tháng 7', 'Tháng 8',
+        'Tháng 9', 'Tháng 10', 'Tháng 11', 'Tháng 12'
+    ];
+
+    for (let i = 3; i >= 0; i--) {
+        const monthStart = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        const monthEnd = new Date(now.getFullYear(), now.getMonth() - i + 1, 0, 23, 59, 59, 999);
+
+        // Convert dates to ISO string format for comparison
+        const monthStartStr = monthStart.toISOString();
+        const monthEndStr = monthEnd.toISOString();
+
+        const tickets = await Ticket.find({
+            accommodation: accommodationId,
+            status: { $ne: 0 },
+            fromDate: {
+                $gte: monthStartStr,
+                $lte: monthEndStr,
+            },
+        });
+
+        const monthRevenue = tickets.reduce((sum, t) => sum + (t.totalPrice || 0), 0);
+        const monthLabel = monthNames[monthStart.getMonth()];
+
+        revenue.push({ label: monthLabel, value: monthRevenue });
+        booking.push({ label: monthLabel, value: tickets.length });
+    }
+
+    return { revenue, booking };
+};
+// Example route setup (add to your router file)
+// import express from 'express';
+// const router = express.Router();
+// router.post('/accommodations/statistics', getAccommodationStatistics);
+// export default router;
 
 export default router;

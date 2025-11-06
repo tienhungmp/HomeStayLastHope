@@ -1,41 +1,56 @@
-import {Box, Container, Stack, SimpleGrid, Text, VisuallyHidden, chakra, useColorModeValue} from '@chakra-ui/react'
-import {FaTwitter, FaYoutube, FaInstagram} from 'react-icons/fa'
+import {
+	Box,
+	Container,
+	Stack,
+	SimpleGrid,
+	Text,
+	VisuallyHidden,
+	chakra,
+	useColorModeValue,
+	Flex,
+	Icon,
+	Link,
+} from '@chakra-ui/react'
+import { FaFacebook, FaTiktok, FaInstagram } from 'react-icons/fa'
 
-const ListHeader = ({children}) => {
-	return (
-		<Text
-			fontWeight={'500'}
-			fontSize={'lg'}
-			mb={2}
-		>
-			{children}
-		</Text>
-	)
-}
+const ListHeader = ({ children }) => (
+	<Text
+		fontWeight="600"
+		fontSize="md"
+		mb={4}
+		textTransform="uppercase"
+		letterSpacing="wider"
+		color={useColorModeValue('gray.600', 'gray.300')}
+	>
+		{children}
+	</Text>
+)
 
-const SocialButton = ({children, label, href}) => {
-	return (
-		<chakra.button
-			bg={useColorModeValue('blackAlpha.100', 'whiteAlpha.100')}
-			rounded={'full'}
-			w={8}
-			h={8}
-			cursor={'pointer'}
-			as={'a'}
-			href={href}
-			display={'inline-flex'}
-			alignItems={'center'}
-			justifyContent={'center'}
-			transition={'background 0.3s ease'}
-			_hover={{
-				bg: useColorModeValue('blackAlpha.200', 'whiteAlpha.200'),
-			}}
-		>
-			<VisuallyHidden>{label}</VisuallyHidden>
-			{children}
-		</chakra.button>
-	)
-}
+const SocialButton = ({ children, label, href }) => (
+	<chakra.button
+		bg={useColorModeValue('white', 'gray.700')}
+		rounded="full"
+		w={10}
+		h={10}
+		cursor="pointer"
+		as="a"
+		href={href}
+		display="inline-flex"
+		alignItems="center"
+		justifyContent="center"
+		transition="all 0.3s ease"
+		boxShadow="md"
+		_hover={{
+			bg: useColorModeValue('gray.100', 'gray.600'),
+			transform: 'translateY(-2px)',
+			boxShadow: 'lg',
+		}}
+		_active={{ transform: 'scale(0.95)' }}
+	>
+		<VisuallyHidden>{label}</VisuallyHidden>
+		{children}
+	</chakra.button>
+)
 
 export default function LargeWithAppLinksAndSocial() {
 	return (
@@ -43,132 +58,81 @@ export default function LargeWithAppLinksAndSocial() {
 			bg={useColorModeValue('gray.50', 'gray.900')}
 			color={useColorModeValue('gray.700', 'gray.200')}
 		>
-			<Container
-				as={Stack}
-				maxW={'6xl'}
-				py={10}
-			>
+			<Container as={Stack} maxW="7xl" py={16}>
 				<SimpleGrid
-					columns={{base: 1, sm: 2, md: 4}}
-					spacing={8}
+					templateColumns={{ base: '1fr', sm: 'repeat(2, 1fr)', md: 'repeat(4, 1fr)' }}
+					spacing={{ base: 10, md: 16 }}
 				>
-					<Stack align={'flex-start'}>
-						<ListHeader>Company</ListHeader>
-						<Box
-							as="a"
-							href={'#'}
-						>
-							About Us
-						</Box>
-						<Box
-							as="a"
-							href={'#'}
-						>
-							Blog
-						</Box>
-						<Box
-							as="a"
-							href={'#'}
-						>
-							Careers
-						</Box>
-						<Box
-							as="a"
-							href={'#'}
-						>
-							Contact Us
-						</Box>
+					<Stack spacing={4}>
+						<ListHeader>Homestay</ListHeader>
+						<Link href="#" _hover={{ color: 'teal.400' }}>Về chúng tôi</Link>
+						<Link href="#" _hover={{ color: 'teal.400' }}>Cẩm nang du lịch</Link>
+						<Link href="#" _hover={{ color: 'teal.400' }}>Tuyển dụng</Link>
+						<Link href="#" _hover={{ color: 'teal.400' }}>Liên hệ</Link>
 					</Stack>
 
-					<Stack align={'flex-start'}>
-						<ListHeader>Support</ListHeader>
-						<Box
-							as="a"
-							href={'#'}
-						>
-							Help Center
-						</Box>
-						<Box
-							as="a"
-							href={'#'}
-						>
-							Safety Center
-						</Box>
-						<Box
-							as="a"
-							href={'#'}
-						>
-							Community Guidelines
-						</Box>
+					<Stack spacing={4}>
+						<ListHeader>Hỗ trợ khách thuê</ListHeader>
+						<Link href="#" _hover={{ color: 'teal.400' }}>Trung tâm trợ giúp</Link>
+						<Link href="#" _hover={{ color: 'teal.400' }}>Quy định an toàn</Link>
+						<Link href="#" _hover={{ color: 'teal.400' }}>Hướng dẫn đặt phòng</Link>
+						<Link href="#" _hover={{ color: 'teal.400' }}>Chính sách hủy</Link>
 					</Stack>
 
-					<Stack align={'flex-start'}>
-						<ListHeader>Legal</ListHeader>
-						<Box
-							as="a"
-							href={'#'}
-						>
-							Cookies Policy
-						</Box>
-						<Box
-							as="a"
-							href={'#'}
-						>
-							Privacy Policy
-						</Box>
-						<Box
-							as="a"
-							href={'#'}
-						>
-							Terms of Service
-						</Box>
-						<Box
-							as="a"
-							href={'#'}
-						>
-							Law Enforcement
-						</Box>
+					<Stack spacing={4}>
+						<ListHeader>Hỗ trợ chủ nhà</ListHeader>
+						<Link href="#" _hover={{ color: 'teal.400' }}>Đăng ký làm chủ nhà</Link>
+						<Link href="#" _hover={{ color: 'teal.400' }}>Quy định đăng tin</Link>
+						<Link href="#" _hover={{ color: 'teal.400' }}>Dịch vụ hỗ trợ</Link>
+						<Link href="#" _hover={{ color: 'teal.400' }}>Bảo hiểm chủ nhà</Link>
+					</Stack>
+
+					<Stack spacing={4}>
+						<ListHeader>Kết nối</ListHeader>
+						<Text fontSize="sm">
+							Theo dõi để cập nhật ưu đãi homestay mới nhất.
+						</Text>
+						<Flex gap={3}>
+							<SocialButton label="Facebook" href="#">
+								<Icon as={FaFacebook} color="#1877F2" />
+							</SocialButton>
+							<SocialButton label="TikTok" href="#">
+								<Icon as={FaTiktok} color="#000000" />
+							</SocialButton>
+							<SocialButton label="Instagram" href="#">
+								<Icon as={FaInstagram} color="#E4405F" />
+							</SocialButton>
+						</Flex>
 					</Stack>
 				</SimpleGrid>
 			</Container>
 
 			<Box
 				borderTopWidth={1}
-				borderStyle={'solid'}
+				borderStyle="solid"
 				borderColor={useColorModeValue('gray.200', 'gray.700')}
 			>
 				<Container
-					as={Stack}
-					maxW={'6xl'}
-					py={4}
-					direction={{base: 'column', md: 'row'}}
-					spacing={4}
-					justify={{md: 'space-between'}}
-					align={{md: 'center'}}
+					as={Flex}
+					maxW="7xl"
+					py={6}
+					direction={{ base: 'column', md: 'row' }}
+					justify="space-between"
+					align="center"
 				>
-					<Text>© 2022 Chakra Templates. All rights reserved</Text>
-					<Stack
-						direction={'row'}
-						spacing={6}
-					>
-						<SocialButton
-							label={'Twitter'}
-							href={'#'}
-						>
-							<FaTwitter />
-						</SocialButton>
-						<SocialButton
-							label={'YouTube'}
-							href={'#'}
-						>
-							<FaYoutube />
-						</SocialButton>
-						<SocialButton
-							label={'Instagram'}
-							href={'#'}
-						>
-							<FaInstagram />
-						</SocialButton>
+					<Text fontSize="sm" color={useColorModeValue('gray.600', 'gray.400')}>
+						© 2024 Homestay Booking. Mọi quyền được bảo lưu.
+					</Text>
+					<Stack direction="row" spacing={6} mt={{ base: 4, md: 0 }}>
+						<Link href="#" fontSize="sm" _hover={{ color: 'teal.400' }}>
+							Chính sách bảo mật
+						</Link>
+						<Link href="#" fontSize="sm" _hover={{ color: 'teal.400' }}>
+							Điều khoản dịch vụ
+						</Link>
+						<Link href="#" fontSize="sm" _hover={{ color: 'teal.400' }}>
+							Liên hệ
+						</Link>
 					</Stack>
 				</Container>
 			</Box>

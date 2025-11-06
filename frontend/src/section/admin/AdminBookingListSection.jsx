@@ -28,6 +28,7 @@ export default function AdminBookingListSection() {
 		}
 		factories
 			.getListTicket({
+				status: activeTab,
 				keyword: keyword,
 				...(getBranchId(auth) && {id: getBranchId(auth)}),
 			})

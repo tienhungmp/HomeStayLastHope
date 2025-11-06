@@ -64,12 +64,22 @@ const Dashboard = () => {
 	const [dataYearTicket, setDataYearTicket] = useState()
 	const [dataYearTopRevenue, setDataYearTopRevenue] = useState()
 
+	// New states for host list, homestay list, and chart data
+	const [hostList, setHostList] = useState([])
+	const [selectedHost, setSelectedHost] = useState(null)
+	const [homestayList, setHomestayList] = useState([])
+	const [selectedHomestay, setSelectedHomestay] = useState(null)
+	const [homestayStats, setHomestayStats] = useState(null)
+	const [timeFilter, setTimeFilter] = useState('month') // 'day' | 'week' | 'month'
+
 	useEffect(() => {
 		loadListMonth()
 		loadListRevenueYear()
 		loadListRevenueTicket()
 		loadListYearTopHost()
 		loadListRouter()
+		if (auth?.roles[0] === ROLES.HOST) loadHostListWithHost()
+		if (auth?.roles[0] === ROLES.ADMIN) loadHostList()
 	}, [auth])
 
 	function loadListMonth() {
@@ -222,6 +232,61 @@ const Dashboard = () => {
 			setDataYearTicket(bookingData)
 		})
 	}
+
+	// Load host list for admin
+	function loadHostList() {
+		factories.getAllHosts().then(res => {
+			setHostList(res)
+		})
+	}
+
+	function loadHostListWithHost() {
+		setHostList([auth])
+	}
+
+	// Load homestays of selected host
+	function loadHomestaysByHost(hostId) {
+		factories.getHomestaysByHost({ownerId: hostId}).then(res => {
+			setHomestayList(res)
+		})
+	}
+
+	// Load stats for selected homestay
+	function loadHomestayStats(homestayId, filter) {
+		factories.getHomestayStats({accommodationId: homestayId, filter}).then(res => {
+			setHomestayStats(res.data)
+		})
+	}
+
+	// Handlers
+	const handleHostClick = (host) => {
+		setSelectedHost(host)
+		loadHomestaysByHost(host._id)
+	}
+
+	const handleHomestayClick = (homestay) => {
+		setSelectedHomestay(homestay)
+		loadHomestayStats(homestay._id, timeFilter)
+	}
+
+	const handleTimeFilterChange = (filter) => {
+		setTimeFilter(filter)
+		if (selectedHomestay) {
+			loadHomestayStats(selectedHomestay._id, filter)
+		}
+	}
+
+	// Close modals
+	const closeHostModal = () => {
+		setSelectedHost(null)
+		setHomestayList([])
+	}
+
+	const closeHomestayModal = () => {
+		setSelectedHomestay(null)
+		setHomestayStats(null)
+	}
+
 	return (
 		<div className="flex h-screen flex-row">
 			<main className="flex w-full flex-1 gap-2 p-4">
@@ -330,9 +395,147 @@ const Dashboard = () => {
 								</div>
 							)}
 						</div>
+						{auth?.roles[0] === ROLES.ADMIN && (
+							<div className="rounded-lg border bg-white p-4 shadow">
+								<h2 className="text-lg font-semibold mb-2">Danh sách Host</h2>
+								{hostList.length === 0 ? (
+									<Spinner />
+								) : (
+									<ul className="max-h-48 overflow-y-auto">
+										{hostList.map(host => (
+											<li
+												key={host._id}
+												className="cursor-pointer p-2 hover:bg-gray-100 rounded"
+												onClick={() => handleHostClick(host)}
+											>
+												{host.name} - {host.email}
+											</li>
+										))}
+									</ul>
+								)}
+							</div>
+						)}
+
+						{auth?.roles[0] === ROLES.HOST && (
+							<div className="rounded-lg border bg-white p-4 shadow">
+								<h2 className="text-lg font-semibold mb-2">Danh sách Host</h2>
+								{hostList.length === 0 ? (
+									<Spinner />
+								) : (
+									<ul className="max-h-48 overflow-y-auto">
+										{hostList.map(host => (
+											<li
+												key={host._id}
+												className="cursor-pointer p-2 hover:bg-gray-100 rounded"
+												onClick={() => handleHostClick(host)}
+											>
+												{host.name} - {host.email}
+											</li>
+										))}
+									</ul>
+								)}
+							</div>
+						)}
 					</div>
 				</div>
 			</main>
+
+			{/* Host Homestays Modal */}
+			{selectedHost && (
+				<div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+					<div className="bg-white rounded-lg p-6 w-96 max-h-[80vh] overflow-y-auto">
+						<div className="flex justify-between items-center mb-4">
+							<h3 className="text-xl font-bold">Homestays của {selectedHost.name}</h3>
+							<button onClick={closeHostModal} className="text-gray-500 hover:text-black">✕</button>
+						</div>
+						{homestayList.length === 0 ? (
+							<Spinner />
+						) : (
+							<ul>
+								{homestayList.map(homestay => (
+									<li
+										key={homestay._id}
+										className="cursor-pointer p-2 hover:bg-gray-100 rounded"
+										onClick={() => handleHomestayClick(homestay)}
+									>
+										{homestay.name}
+									</li>
+								))}
+							</ul>
+						)}
+					</div>
+				</div>
+			)}
+
+			{/* Homestay Stats Modal */}
+			{selectedHomestay && (
+				<div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+					<div className="bg-white rounded-lg p-6 w-[700px] max-h-[90vh] overflow-y-auto">
+						<div className="flex justify-between items-center mb-4">
+							<h3 className="text-xl font-bold">Thống kê {selectedHomestay.name}</h3>
+							<button onClick={closeHomestayModal} className="text-gray-500 hover:text-black">✕</button>
+						</div>
+						<div className="mb-4 flex gap-2">
+							<button
+								className={`px-3 py-1 rounded ${timeFilter === 'day' ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
+								onClick={() => handleTimeFilterChange('day')}
+							>
+								Ngày
+							</button>
+							<button
+								className={`px-3 py-1 rounded ${timeFilter === 'week' ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
+								onClick={() => handleTimeFilterChange('week')}
+							>
+								Tuần
+							</button>
+							<button
+								className={`px-3 py-1 rounded ${timeFilter === 'month' ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
+								onClick={() => handleTimeFilterChange('month')}
+							>
+								Tháng
+							</button>
+						</div>
+						{!homestayStats ? (
+							<Spinner />
+						) : (
+							<div className="flex flex-col gap-4">
+								<div className="flex-1 rounded border p-3">
+									<h4 className="font-semibold">Doanh thu</h4>
+									<Line
+										data={{
+											labels: homestayStats.revenue.map(item => item.label),
+											datasets: [{
+												label: 'Doanh thu (VNĐ)',
+												data: homestayStats.revenue.map(item => item.value),
+												backgroundColor: 'rgba(75,192,192,1)',
+												borderColor: 'rgba(75,192,192,1)',
+												fill: false,
+											}]
+										}}
+										options={{responsive: true}}
+									/>
+								</div>
+								<div className="flex-1 rounded border p-3">
+									<h4 className="font-semibold">Lượt đặt</h4>
+									<Bar
+										data={{
+											labels: homestayStats.booking.map(item => item.label),
+											datasets: [{
+												label: 'Lượt đặt',
+												data: homestayStats.booking.map(item => item.value),
+												backgroundColor: 'rgba(255,99,132,0.6)',
+												borderColor: 'rgba(255,99,132,1)',
+												borderWidth: 1,
+											}]
+										}}
+										options={{responsive: true}}
+									/>
+								</div>
+							</div>
+						)}
+					</div>
+				</div>
+			)}
 		</div>
 	)
 }

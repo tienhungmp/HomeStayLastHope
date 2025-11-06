@@ -80,6 +80,11 @@ export default function AdminAccommodationList() {
 			renderCell: row => <div className="w-44">{row?.name}</div>,
 		},
 		{
+			id: 'name',
+			label: 'Tên chủ nhà',
+			renderCell: row => <div className="w-44">{row?.host?.fullName}</div>,
+		},
+		{
 			id: 'type',
 			label: 'Loại hình',
 			renderCell: row => <div className="">{TYPE_HOST.find(x => x.id === row.type)?.name}</div>,

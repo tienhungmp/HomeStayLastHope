@@ -47,6 +47,11 @@ export default function AdminRoomList() {
 			renderCell: row => <div className="">{row?.name}</div>,
 		},
 		{
+			id: 'accommodation',
+			label: 'Chỗ nghỉ',
+			renderCell: row => <div className="">{row?.accommodationId?.name}</div>,
+		},
+		{
 			id: 'capacity',
 			label: 'Số người',
 			renderCell: row => <div className="w-40">{row.capacity}</div>,
