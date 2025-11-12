@@ -95,11 +95,6 @@ export default function AdminAccommodationList() {
 			renderCell: row => <div className="">{PROVINCES.find(x => x.id == row.city)?.name}</div>,
 		},
 		{
-			id: 'rating',
-			label: 'Đánh giá',
-			renderCell: row => <div className="w-40">{row?.rating || 'Chưa có đánh giá'}</div>,
-		},
-		{
 			id: 'address',
 			label: 'Địa chỉ',
 			renderCell: row => <div className="">{row?.address}</div>,

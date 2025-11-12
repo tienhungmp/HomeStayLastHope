@@ -12,6 +12,9 @@ import requestRoute from "./routes/request.route.js";
 import statisticRoute from "./routes/statistic.route.js";
 import ticketRoutes from "./routes/ticket.route.js";
 import userRoutes from "./routes/user.route.js";
+import statisticsRoutes from './routes/statistics.routes.js';
+
+// Đăng ký route
 
 dotenv.config();
 const port = process.env.PORT || 5000;
@@ -39,6 +42,8 @@ app.use("/requests", requestRoute);
 app.use("/statics", statisticRoute);
 app.use("/payment", paymentRoute);
 app.use("/recommend", recommendedRoute);
+app.use('/statistics', statisticsRoutes);
+
 
 app.use(cookieParser());
 
