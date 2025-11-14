@@ -9,7 +9,7 @@ export default function SideBarSearch() {
 	const [typeSort, setTypeSort] = useState()
 	const [amenitiesSearch, setAmenitiesSearch] = useState([])
 	const [rateCount, setRateCount] = useState()
-	const [price, setPrice] = useState([100000, 2000000])
+	const [price, setPrice] = useState([100000, 5000000])
 	const [typeAccommodation, setTypeAccommodation] = useState([])
 	const router = useRouter()
 
@@ -98,8 +98,8 @@ export default function SideBarSearch() {
 						step={50}
 						label="Giá"
 						minValue={100000}
-						maxValue={2000000}
-						defaultValue={[100000, 2000000]}
+						maxValue={5000000}
+						defaultValue={[100000, 5000000]}
 						onChange={setPrice}
 						formatOptions={{style: 'currency', currency: 'VND'}}
 						className="max-w-md"
