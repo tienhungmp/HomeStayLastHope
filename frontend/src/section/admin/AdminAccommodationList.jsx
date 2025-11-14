@@ -121,14 +121,26 @@ export default function AdminAccommodationList() {
 					>
 						<i className="fas fa-bed text-sm text-blue-500"></i>
 					</Button>
-					<Button
+					{auth.roles[0] === ROLES.HOST && 
+						<Button
 						variant="ghost"
 						size="sm"
 						className="h-8 w-8 border-none"
 						onClick={() => toggleVisibility(row)}
-					>
-						<i className={`fas ${row.isVisible ? 'fa-eye text-green-500' : 'fa-eye-slash text-gray-400'}`}></i>
-					</Button>
+						>
+							<i className={`fas ${row?.isVisible ? 'fa-eye text-green-500' : 'fa-eye-slash text-gray-400'}`}></i>
+						</Button>
+					}
+					{auth.roles[0] === ROLES.ADMIN && 
+						<Button
+						variant="ghost"
+						size="sm"
+						className="h-8 w-8 border-none"
+						onClick={() => toggleVisibilityAdmin(row)}
+						>
+							<i className={`fas ${row?.isVisibleAdmin ? 'fa-eye text-blue-600' : 'fa-eye-slash text-gray-400'}`}></i>
+						</Button>
+					}
 				</div>
 			),
 		},
@@ -172,9 +184,21 @@ export default function AdminAccommodationList() {
 
 	async function toggleVisibility(row) {
 		try {
-			await factories.updateAccommodationVisibility({
-				id: row.id,
-				isVisible: !row.isVisible,
+			await factories.updateHiddedAccommodationHost({
+				id: row._id,
+				status: !row.isVisible,
+			})
+			loadList()
+		} catch (error) {
+			console.error('Failed to toggle visibility:', error)
+		}
+	}
+
+	async function toggleVisibilityAdmin(row) {
+		try {
+			await factories.updateHiddedAccommodationAdmin({
+				id: row._id,
+				status: !row.isVisibleAdmin,
 			})
 			loadList()
 		} catch (error) {

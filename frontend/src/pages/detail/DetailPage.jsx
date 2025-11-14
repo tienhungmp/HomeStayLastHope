@@ -262,26 +262,23 @@ export default function DetailPage() {
 						</button>
 					</div>
 				</div>
-				<div className="flex w-full flex-row justify-between">
+				<div className="flex w-full flex-col gap-6 lg:flex-row lg:justify-between">
 					<div className="flex-grow">
-						<h2 className="mb-2 text-xl font-bold">Các tiện nghi</h2>
+						<h2 className="mb-4 text-2xl font-bold text-gray-800">Tiện nghi nổi bật</h2>
 						<div
 							ref={amenityRef}
-							className="flex flex-wrap gap-3"
+							className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-3 xl:grid-cols-4"
 						>
 							{data.amenities.map(amenity => {
-								const item = AMENITIES.find(item => {
-									return item.id === amenity
-								})
-								if (!item) return
+								const item = AMENITIES.find(item => item.id === amenity)
+								if (!item) return null
 								return (
 									<div
 										key={item.id}
-										className="min-w-[150px] rounded-lg border px-6 py-2 shadow-md"
+										className="flex items-center gap-3 rounded-xl border border-gray-200 bg-white p-4 shadow-sm transition hover:shadow-md"
 									>
-										<div className="flex items-center gap-2">
-											<p className="text-center text-lg font-bold">{item.title}</p>
-										</div>
+										{item.icon && <span className="text-2xl text-cyan-600">{item.icon()}</span>}
+										<p className="text-sm font-semibold text-gray-700">{item.title}</p>
 									</div>
 								)
 							})}
@@ -330,7 +327,7 @@ export default function DetailPage() {
 							</tr>
 						</thead>
 						<tbody>
-							{data?.rooms.map((room, index) => (
+							{data?.rooms.filter(room => room.isVisible === true).map((room, index) => (
 								<tr
 									key={index}
 									className="border"
@@ -369,7 +366,7 @@ export default function DetailPage() {
 										<div className="min-w-[120px] font-bold text-green-600">{convertStringToNumber(room?.pricePerNight)}</div>
 									</td>
 									<td className="border p-2">
-										<ul className="max-w-[340px] text-sm">
+										<ul className="max-h-60 max-w-[340px] overflow-y-auto text-sm">
 											{AMENITIES_ROOM.map(amenity => {
 												const hasSelectedChild = amenity.items.some(item => room.amenities.includes(item.id))
 												if (room.amenities.includes(amenity.id) || hasSelectedChild) {

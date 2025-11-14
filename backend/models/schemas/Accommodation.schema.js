@@ -23,6 +23,7 @@ const AccommodationSchema = new mongoose.Schema({
     rating: { type: Number, default: 0 },
     ratingCount: { type: Number, default: 0 },
     isVisible: { type: Boolean, default: true },
+    isVisibleAdmin: { type: Boolean, default: false },
 });
 
 AccommodationSchema.index({ city: 1, pricePerNight: 1 });

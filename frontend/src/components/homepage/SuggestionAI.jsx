@@ -27,7 +27,7 @@ function SuggestionAI() {
 				<h2 className="mb-8 text-2xl font-extrabold">Bạn có quan tâm đến những chỗ nghỉ này?</h2>
 				{list && list.length < 1 && <div className="mt-0 w-full">Nhận nhiều gợi ý các phòng phù hợp hơn khi đặt phòng</div>}
 				<div className="grid grid-cols-3 gap-8">
-					{list && list.length > 1 &&
+					{list && list.length >= 1 &&
 						list.map(item => (
 							<CardDestination
 								name={item?.address}

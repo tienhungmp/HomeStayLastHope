@@ -9,6 +9,7 @@ const RoomSchema = new mongoose.Schema({
     images: [{ type: String }],
     quantity: { type: Number, required: true },
     description: { type: String },
+    isVisible: { type: Boolean, default: true },
 });
 
 RoomSchema.index({ pricePerNight: 1 });

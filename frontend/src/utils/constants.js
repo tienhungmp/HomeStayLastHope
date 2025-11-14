@@ -1,27 +1,27 @@
 export const TYPE_HOST = [
     {
         id: 1,
-        name: 'Căn hộ',
+        name: 'Homestay Núi - Rừng',
     },
     {
         id: 2,
-        name: 'Nhà nguyên căn',
+        name: 'Homestay Ven Suối',
     },
     {
         id: 3,
-        name: 'Biệt thự',
+        name: 'Nhà Gỗ Homestay',
     },
     {
         id: 4,
-        name: 'Khách sạn',
+        name: 'Nhà Sàn Homestay',
     },
     {
         id: 5,
-        name: 'Nhà nghỉ',
+        name: 'Bungalow Rừng',
     },
     {
         id: 6,
-        name: 'Resort',
+        name: 'Farmstay Thiên Nhiên',
     },
 ]
 

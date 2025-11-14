@@ -40,6 +40,18 @@ export default function AdminRoomList() {
 		})
 	}
 
+	async function toggleVisibility(row) {
+		try {
+			await factories.updateHiddedRoomHost({
+				id: row._id,
+				status: !row.isVisible,
+			})
+			loadList()
+		} catch (error) {
+			console.error('Failed to toggle visibility:', error)
+		}
+	}
+
 	const columns = [
 		{
 			id: 'name',
@@ -79,6 +91,14 @@ export default function AdminRoomList() {
 						onClick={() => handleEdit(row)}
 					>
 						<i className="fas fa-pen text-sm text-gray-400"></i>
+					</Button>
+					<Button
+						variant="ghost"
+						size="sm"
+						className="h-8 w-8 border-none"
+						onClick={() => toggleVisibility(row)}
+						>
+							<i className={`fas ${row?.isVisible ? 'fa-eye text-green-500' : 'fa-eye-slash text-gray-400'}`}></i>
 					</Button>
 				</div>
 			),

@@ -190,6 +190,27 @@ export const factories = {
             data: data,
         });
     },
+    updateHiddedAccommodationHost: (data) => {
+        return ApiOperation.request({
+            url: ApiConstants.ACCOMMODATIONS + '/update-accommodation-show-host/',
+            method: 'POST',
+            data: data
+        })
+    },
+    updateHiddedAccommodationAdmin: (data) => {
+        return ApiOperation.request({
+            url: ApiConstants.ACCOMMODATIONS + '/update-accommodation-show-admin/',
+            method: 'POST',
+            data: data
+        })
+    },
+    updateHiddedRoomHost: (data) => {
+        return ApiOperation.request({
+            url: ApiConstants.ACCOMMODATIONS + '/update-room-show-host/',
+            method: 'POST',
+            data: data
+        })
+    },
     createNewRoom: (data) => {
         return ApiOperation.request({
             url: ApiConstants.ACCOMMODATIONS + '/' + data.id + '/rooms',

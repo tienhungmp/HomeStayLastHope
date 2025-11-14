@@ -2,11 +2,11 @@ import DatePickerField from '@components/common/DatePickerField'
 import ImageGallery from '@components/galery/Galery'
 import {useAuth} from '@context/AuthContext.jsx'
 import {useModalCommon} from '@context/ModalContext.jsx'
-import {getLocalTimeZone, today} from '@internationalized/date'
+import {getLocalTimeZone, now, today} from '@internationalized/date'
 import {Button, Image} from '@nextui-org/react'
 import {RouterPath} from '@router/RouterPath'
 import {PROVINCES, TYPE_HOST} from '@utils/constants'
-import {convertStringToNumber, differenceInTime, getDate, ToastInfo, ToastNotiError} from '@utils/Utils'
+import {convertStringToNumber, getDate, ToastInfo, ToastNotiError} from '@utils/Utils'
 import React, {useEffect, useMemo, useState} from 'react'
 import {FormProvider, useForm} from 'react-hook-form'
 import {factories} from '../../factory'
@@ -25,20 +25,50 @@ export default function ConfirmPage() {
 	useEffect(() => {
 		scrollTo(0, 0)
 	}, [])
+
+	// Hàm tính số giờ giữa 2 mốc thời gian
+	const calculateHoursDifference = (fromDateTime, toDateTime) => {
+		if (!fromDateTime || !toDateTime) return 0
+		
+		const fromDate = new Date(fromDateTime.year, fromDateTime.month - 1, fromDateTime.day, 
+			fromDateTime.hour || 0, fromDateTime.minute || 0)
+		const toDate = new Date(toDateTime.year, toDateTime.month - 1, toDateTime.day,
+			toDateTime.hour || 0, toDateTime.minute || 0)
+		
+		const diffMs = toDate - fromDate
+		const diffHours = diffMs / (1000 * 60 * 60)
+		
+		return diffHours
+	}
+
+	// Hàm tính số ngày (làm tròn lên nếu > 0)
+	const calculateDays = (hours) => {
+		if (hours <= 0) return 0
+		return Math.ceil(hours / 24)
+	}
+
 	function handleSave(values) {
 		if (!values.fromDate) {
-			ToastNotiError('Vui lòng chọn ngày nhận phòng')
+			ToastNotiError('Vui lòng chọn ngày giờ nhận phòng')
 			return
 		}
-		if (!values.fromDate) {
-			ToastNotiError('Vui lòng chọn ngày trả phòng')
+		if (!values.toDate) {
+			ToastNotiError('Vui lòng chọn ngày giờ trả phòng')
+			return
+		}
+
+		const hoursDiff = calculateHoursDifference(values.fromDate, values.toDate)
+		
+		// Kiểm tra tối thiểu 24 giờ (1 ngày)
+		if (hoursDiff < 24) {
+			ToastNotiError('Thời gian thuê phải tối thiểu 1 ngày (24 giờ)')
 			return
 		}
 		
 		setLoading(true)
 		const newFromDate = getDate(values.fromDate, 8)
 		const newToDate = getDate(values.toDate, 8)
-		const days = differenceInTime(values.toDate, values.fromDate)
+		const days = calculateDays(hoursDiff)
 
 		const newTicket = {
 			userId: auth._id,
@@ -52,11 +82,12 @@ export default function ConfirmPage() {
 			totalPrice: data.roomsSelected.reduce((total, number) => total + number.price * number.number, 0) * days,
 		}
 
-		if( newTicket.totalPrice <=0) {
-			ToastNotiError('Ngay ko hop le')
+		if(newTicket.totalPrice <= 0) {
+			ToastNotiError('Ngày không hợp lệ')
 			setLoading(false)
 			return
 		}
+
 		factories
 			.createTicket(newTicket)
 			.then(() => {
@@ -73,6 +104,7 @@ export default function ConfirmPage() {
 				setLoading(false)
 			})
 	}
+
 	useEffect(() => {
 		if (auth) {
 			setValue('fullName', auth.fullName)
@@ -91,13 +123,24 @@ export default function ConfirmPage() {
 	}
 
 	useEffect(() => {
-		setValue('fromDate', today(getLocalTimeZone()))
-		setValue('toDate', today(getLocalTimeZone()))
+		setValue('fromDate', now(getLocalTimeZone()))
+		// Mặc định toDate = fromDate + 24 giờ
+		const defaultToDate = now(getLocalTimeZone()).add({hours: 24})
+		setValue('toDate', defaultToDate)
 	}, [])
 
-	const differenceTime = useMemo(() => {
-		return differenceInTime(methods.watch('fromDate'), methods.watch('toDate'))
-	}, [methods.watch('fromDate '), methods.watch('toDate')])
+	const timeInfo = useMemo(() => {
+		const fromDate = methods.watch('fromDate')
+		const toDate = methods.watch('toDate')
+		
+		if (!fromDate || !toDate) return {hours: 0, days: 0}
+		
+		const hours = calculateHoursDifference(fromDate, toDate)
+		const days = calculateDays(hours)
+		
+		return {hours: Math.max(0, hours), days}
+	}, [methods.watch('fromDate'), methods.watch('toDate')])
+
 	return (
 		<div className="mx-auto mb-20 mt-16 flex max-w-full justify-center gap-4 px-5 lg:max-w-[70%] lg:px-0 2xl:max-w-[60%]">
 			<FormProvider {...methods}>
@@ -124,28 +167,44 @@ export default function ConfirmPage() {
 									<div className="flex items-center gap-4">
 										<span className="w-full flex-1 text-sm">
 											<DatePickerField
-												label="Ngày nhận phòng"
+												label="Ngày giờ nhận phòng"
 												name="fromDate"
 												isRequired
-												granularity="day"
-												minValue={today(getLocalTimeZone())}
-												// defaultValue={today(getLocalTimeZone())}
+												granularity="minute"
+												hourCycle={24}
+												minValue={now(getLocalTimeZone())}
 												validate={{required: 'Bắt buộc chọn'}}
 											/>
 										</span>
 										<span className="flex-1 text-sm">
 											<DatePickerField
-												label="Ngày trả phòng"
+												label="Ngày giờ trả phòng"
 												name="toDate"
-												// defaultValue={today(getLocalTimeZone())}
 												isRequired
-												granularity="day"
-												minValue={methods.watch('fromDate') ?? today(getLocalTimeZone())}
+												granularity="minute"
+												hourCycle={24}
+												minValue={methods.watch('fromDate')?.add({hours: 24}) ?? now(getLocalTimeZone()).add({hours: 24})}
 												validate={{required: 'Bắt buộc chọn'}}
 											/>
 										</span>
 									</div>
 								</div>
+								
+								{/* Hiển thị thông tin thời gian */}
+								<div className="mb-4 rounded-lg bg-blue-50 p-3">
+									<div className="flex justify-between text-sm">
+										<span className="font-medium">Thời gian thuê:</span>
+										<span className="font-semibold text-blue-600">
+											{timeInfo.hours > 0 ? `${timeInfo.hours.toFixed(1)} giờ (${timeInfo.days} ngày)` : '0 giờ'}
+										</span>
+									</div>
+									{timeInfo.hours > 0 && timeInfo.hours < 24 && (
+										<p className="mt-2 text-xs text-red-500">
+											⚠ Tối thiểu phải thuê 24 giờ (1 ngày)
+										</p>
+									)}
+								</div>
+
 								<hr className="my-4 border-gray-300" />
 								<div className="flex flex-col gap-4">
 									{data.roomsSelected?.map((room, index) => {
@@ -189,7 +248,7 @@ export default function ConfirmPage() {
 														<div className="flex flex-col items-end justify-end gap-2">
 															<p className="text-sm text-gray-500">{convertStringToNumber(roomT.pricePerNight * room.number)}</p>
 															<p className="text-sm text-gray-500">x{room.number}</p>
-															<p className="text-sm text-gray-500">{differenceTime} ngày</p>
+															<p className="text-sm text-gray-500">{timeInfo.days} ngày</p>
 														</div>
 													</div>
 												</div>
@@ -203,7 +262,7 @@ export default function ConfirmPage() {
 									<span className="text-lg font-semibold">Tổng chi phí:</span>
 									<div className="text-2xl font-bold text-gray-900">
 										{convertStringToNumber(
-											data.roomsSelected.reduce((room, number) => room + number.price * number.number * differenceTime, 0),
+											data.roomsSelected.reduce((room, number) => room + number.price * number.number * timeInfo.days, 0),
 										)}
 									</div>
 								</div>
@@ -214,6 +273,7 @@ export default function ConfirmPage() {
 								className="mt-4 w-full"
 								variant="shadow"
 								isLoading={loading}
+								isDisabled={timeInfo.hours < 24}
 							>
 								Đặt phòng
 							</Button>

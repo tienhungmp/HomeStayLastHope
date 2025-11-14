@@ -8,14 +8,13 @@ import Policy from "../models/schemas/Policy.schema.js";
 import Room from "../models/schemas/Room.schema.js";
 import Ticket from "../models/schemas/Ticket.schema.js";
 import User from "../models/schemas/user.schema.js";
+import RoomSchema from "../models/schemas/Room.schema.js";
 // Helper method
 const getPricePerNight = (accommodation, isAscending) => {
-    if ([0, 1, 2].includes(accommodation.type)) {
-        return accommodation.pricePerNight;
-    } else {
-        const roomPrices = accommodation.rooms.map((room) => room.pricePerNight);
-        return isAscending ? Math.min(...roomPrices) : Math.max(...roomPrices);
-    }
+    const roomPrices = accommodation.rooms.map((room) => room.pricePerNight);
+    return isAscending
+        ? Math.min(...roomPrices)
+        : Math.max(...roomPrices);
 };
 
 router.get("/list-host", async (req, res) => {
@@ -47,6 +46,82 @@ router.get("/list-host", async (req, res) => {
             message: "Error getting host users",
             error: error.message,
         });
+    }
+});
+
+router.post('/update-accommodation-show-host', async (req, res) => {
+    try {
+        const { id, status } = req.body;
+
+        if (typeof status !== 'boolean') {
+            return res.status(400).json({ message: 'Status must be a boolean value' });
+        }
+
+        const accommodation = await Accommodation.findByIdAndUpdate(
+            id,
+            { isVisible: status },
+            { new: true }
+        );
+
+        if (!accommodation) {
+            return res.status(404).json({ message: 'Ticket not found' });
+        }
+
+        res.status(200).json(accommodation);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Internal server error', error: error.message });
+    }
+});
+
+
+router.post('/update-accommodation-show-admin', async (req, res) => {
+    try {
+        const { id, status } = req.body;
+
+        if (typeof status !== 'boolean') {
+            return res.status(400).json({ message: 'Status must be a boolean value' });
+        }
+
+        const accommodation = await Accommodation.findByIdAndUpdate(
+            id,
+            { isVisibleAdmin: status },
+            { new: true }
+        );
+
+        if (!accommodation) {
+            return res.status(404).json({ message: 'Ticket not found' });
+        }
+
+        res.status(200).json(accommodation);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Internal server error', error: error.message });
+    }
+});
+
+router.post('/update-room-show-host', async (req, res) => {
+    try {
+        const { id, status } = req.body;
+
+        if (typeof status !== 'boolean') {
+            return res.status(400).json({ message: 'Status must be a boolean value' });
+        }
+
+        const room = await RoomSchema.findByIdAndUpdate(
+            id,
+            { isVisible: status },
+            { new: true }
+        );
+
+        if (!room) {
+            return res.status(404).json({ message: 'Ticket not found' });
+        }
+
+        res.status(200).json(room);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Internal server error', error: error.message });
     }
 });
 
@@ -170,6 +245,7 @@ router.put("/:id", async (req, res) => {
         res.status(500).json({ message: "Internal server error." });
     }
 });
+
 router.get("/", async (req, res) => {
     try {
         const {
@@ -188,6 +264,7 @@ router.get("/", async (req, res) => {
             page = 1,
             limit = 10,
         } = req.query;
+
         if (!city || !fromDate || !toDate || !roomQuantity || !pricePerNight) {
             return res.status(400).json({
                 message:
@@ -201,68 +278,47 @@ router.get("/", async (req, res) => {
         const amenitiesArray = amenities
             ? amenities.split(",").map((a) => a.trim())
             : [];
-        const isWithPetBool = isWithPet.toLowerCase() === "true";
+        const isWithPetBool = isWithPet?.toLowerCase() === "true";
         const pricePerNightRange = pricePerNight
             .split(",")
             .map((price) => parseInt(price.trim(), 10));
-        const typeFilter = type?.split(",").map((t) => parseInt(t.trim(), 10))
+        const typeFilter = type?.split(",").map((t) => parseInt(t.trim(), 10));
 
+        // Query accommodations dựa vào room
         const accommodations = await Accommodation.find({
             city: city.toString(),
+            isVisible: true,
+            isVisibleAdmin: true,
             ...(amenitiesArray.length > 0 && {
                 amenities: { $all: amenitiesArray },
             }),
-            ...(isWithPetBool && { amenities: { $in: ['FPET'] } }),
+            ...(isWithPetBool && { amenities: { $in: ["FPET"] } }),
             ...(type?.length > 0 && {
-                type: { $in: typeFilter }
+                type: { $in: typeFilter },
             }),
-            $or: [
-                // Điều kiện 1: Kiểm tra giá của Accommodation
-                {
+            rooms: {
+                $in: await Room.find({
+                    capacity: { $gte: capacityNumber },
                     pricePerNight: {
                         $gte: pricePerNightRange[0],
                         $lte: pricePerNightRange[1],
                     },
+                }).distinct("_id"),
+            },
+        }).populate({
+            path: "rooms",
+            select: "name capacity quantity pricePerNight amenities description",
+            match: {
+                capacity: { $gte: capacityNumber },
+                pricePerNight: {
+                    $gte: pricePerNightRange[0],
+                    $lte: pricePerNightRange[1],
                 },
-                // Điều kiện 2: Kiểm tra giá của một trong các phòng trong Accommodation
-                {
-                    // Populate rooms để lấy dữ liệu chi tiết của Room
-                    rooms: {
-                        $in: await Room.find({
-                            pricePerNight: { $gte: pricePerNightRange[0], $lte: pricePerNightRange[1] },
-                        }).distinct('_id')  // Lấy các roomId có giá phù hợp
-                    }
-                },
-            ],
-        })
-            .populate({
-                path: "rooms",
-                select: "name capacity quantity pricePerNight amenities description",
-                match: (function () {
-                    return function (doc) {
-                        if ([0, 1, 2].includes(doc.type)) {
-                            return {};
-                        }
-                        const capacityMatch = { capacity: { $gte: capacityNumber } };
-                        // const amenitiesMatch =
-                        //     amenitiesArray.length > 0
-                        //         ? { amenities: { $all: amenitiesArray } }
-                        //         : {};
+            },
+        });        
 
-                        const priceMatch = {
-                            pricePerNight: {
-                                $gte: pricePerNightRange[0],
-                                $lte: pricePerNightRange[1],
-                            },
-                        };
-
-                        return { ...capacityMatch, ...priceMatch };
-                    };
-                })(),
-            })
-
+        // Filter accommodations theo số lượng phòng trống
         let filteredAccommodations = [];
-
         for (const accommodation of accommodations) {
             let isAccommodationValid = true;
 
@@ -279,7 +335,7 @@ router.get("/", async (req, res) => {
 
                 const bookedQuantity = tickets.reduce((sum, ticket) => {
                     const bookedRoom = ticket.rooms.find(
-                        (r) => r.roomId === room._id.toString(),
+                        (r) => r.roomId === room._id.toString()
                     );
                     return sum + (bookedRoom?.bookedQuantity || 0);
                 }, 0);
@@ -297,45 +353,63 @@ router.get("/", async (req, res) => {
             }
         }
 
+        // Sort theo orderBy
         if (orderBy === "0") {
-            // Order by rating
+            // Theo rating
             filteredAccommodations.sort((a, b) => b.rating - a.rating);
         } else {
-            // Order by pricePerNight
+            // Theo giá phòng
             filteredAccommodations.sort((a, b) => {
                 const priceA = getPricePerNight(a, orderBy === "1");
                 const priceB = getPricePerNight(b, orderBy === "1");
-
                 return orderBy === "1" ? priceA - priceB : priceB - priceA;
             });
         }
 
+        // Phân trang
         const total = filteredAccommodations.length;
         const paginatedAccommodations = filteredAccommodations.slice(
             (pageNumber - 1) * limitNumber,
-            pageNumber * limitNumber,
+            pageNumber * limitNumber
         );
 
-        let listAccommodations = paginatedAccommodations.filter((acc) => acc.rooms.length > 0)
+        // Tính rating trung bình
+        let listAccommodations = paginatedAccommodations.filter(
+            (acc) => acc.rooms.length > 0
+        );
+
         listAccommodations = listAccommodations.map(async (acc) => {
-            const tickets = await Ticket.find({ accommodation: acc._id, star: { $gt: 0 } })
+            const tickets = await Ticket.find({
+                accommodation: acc._id,
+                star: { $gt: 0 },
+            });
             return {
                 ...acc.toObject(),
                 totalReviews: tickets.length,
-                averageRating: tickets.length > 0
-                    ? tickets.reduce((sum, ticket) => sum + ticket.star, 0) / tickets.length
-                    : 0,
+                averageRating:
+                    tickets.length > 0
+                        ? tickets.reduce((sum, ticket) => sum + ticket.star, 0) /
+                          tickets.length
+                        : 0,
             };
         });
-        const resolvedAccommodations = await Promise.all(listAccommodations);
-        listAccommodations = resolvedAccommodations.filter((acc) => acc.averageRating >= rate);
 
+        const resolvedAccommodations = await Promise.all(listAccommodations);
+        listAccommodations = resolvedAccommodations.filter(
+            (acc) => acc.averageRating >= rate
+        );
+
+        // Sort theo sort param nếu có
         switch (sort) {
-            case 'S1':
-                listAccommodations = listAccommodations.sort((a, b) => b.averageRating - a.averageRating);
+            case "S1":
+                listAccommodations = listAccommodations.sort(
+                    (a, b) => b.averageRating - a.averageRating
+                );
                 break;
-            case 'S2':
-                listAccommodations = listAccommodations.sort((a, b) => a.averageRating - b.averageRating);
+            case "S2":
+                listAccommodations = listAccommodations.sort(
+                    (a, b) => a.averageRating - b.averageRating
+                );
                 break;
             default:
                 break;
@@ -351,7 +425,7 @@ router.get("/", async (req, res) => {
             },
         });
     } catch (error) {
-        console.error("Error searching accommodations by name:", error);
+        console.error("Error searching accommodations:", error);
         res.status(500).json({ message: "Internal server error" });
     }
 });
@@ -489,7 +563,7 @@ router.get("/:id", async (req, res) => {
             )
             .populate(
                 "rooms",
-                "name capacity quantity pricePerNight amenities description images",
+                "name capacity quantity pricePerNight amenities description images isVisible",
             );
 
         const tickets = await Ticket.find({ accommodation: id, star: { $gt: 0 }, isShowReview: true }).populate('userId').populate('accommodation');

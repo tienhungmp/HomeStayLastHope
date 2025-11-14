@@ -16,6 +16,7 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "@react-aria/i18n": "^3.12.13",
     "axios": "^1.7.8",
     "bcryptjs": "^2.4.3",
     "clsx": "^2.1.1",
@@ -35,6 +36,7 @@
     "mongoose": "^8.6.1",
     "nodemon": "^3.1.4",
     "prettier": "^3.4.1",
+    "react-datepicker": "^8.9.0",
     "react-leaflet": "^4.2.1",
     "react-phone-input-2": "^2.15.1",
     "react-toastify": "^10.0.5",

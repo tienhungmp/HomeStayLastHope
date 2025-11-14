@@ -33,6 +33,7 @@ ChartJS.register(
 // Mock factory for demo - replace with real import
 import { statisticsFactory } from '../../factory/statistics.factory';
 import {useAuth} from '../../context/AuthContext'
+import { ROLES } from '@utils/constants';
 
 const Dashboard = () => {
   const {auth} = useAuth()
@@ -233,8 +234,12 @@ const Dashboard = () => {
     setLoading(prev => ({ ...prev, hosts: true }));
     try {
       const response = await statisticsFactory.getAllHosts();
-      // response is already the array from interceptor
+      if(auth.roles[0] === ROLES.HOST) {
+        response.filter(item => item._id === auth._id);
+      }
+        
       setHostList(Array.isArray(response) ? response : []);
+      
     } catch (err) {
       console.error('Error loading hosts:', err);
     } finally {
@@ -429,7 +434,8 @@ const Dashboard = () => {
                 )}
               </div>
             </div>
-
+                
+            {auth.roles[0] === ROLES.ADMIN && 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="bg-white rounded-lg shadow p-6">
                 <h2 className="text-lg font-semibold mb-4">Top địa điểm phổ biến</h2>
@@ -452,6 +458,7 @@ const Dashboard = () => {
                 )}
               </div>
             </div>
+            }      
 
             <div className="bg-white rounded-lg shadow p-6">
               <h2 className="text-lg font-semibold mb-4">Danh sách Host</h2>

@@ -44,7 +44,7 @@ async function getAllUniqueAmenities(tickets, top = 5) {
 
 router.get('/', async (req, res) => {
     try {
-        // Lấy 5 accommodations ngẫu nhiên không trùng lặp
+        // Lấy 6 accommodations ngẫu nhiên thỏa điều kiện
         const accommodations = await Room.aggregate([
             {
                 $lookup: {
@@ -55,6 +55,13 @@ router.get('/', async (req, res) => {
                 }
             },
             { $unwind: '$accommodation' },
+            // Chỉ lấy những accommodation được hiển thị
+            {
+                $match: {
+                    'accommodation.isVisible': true,
+                    'accommodation.isVisibleAdmin': true
+                }
+            },
             {
                 $group: {
                     _id: '$accommodation._id',
@@ -65,7 +72,7 @@ router.get('/', async (req, res) => {
                     images: { $first: '$accommodation.images' },
                     amenities: { $first: '$accommodation.amenities' },
                     rating: { $first: '$accommodation.rating' },
-                    pricePerNight: { $first: '$pricePerNight' }
+                    pricePerNight: { $first: '$pricePerNight' },
                 }
             },
             { $sample: { size: 6 } },
@@ -90,4 +97,5 @@ router.get('/', async (req, res) => {
         res.status(500).json({ message: 'Internal server error' });
     }
 });
+
 export default router;
