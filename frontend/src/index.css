@@ -6,3 +6,13 @@
 body{
   scroll-behavior: smooth;
 }
+/* Trong file CSS global */
+.leaflet-container {
+  z-index: 1 !important;
+}
+
+/* Hoặc giảm z-index của map component */
+.map-container {
+  position: relative;
+  z-index: 1;
+}

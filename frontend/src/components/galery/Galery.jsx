@@ -18,7 +18,7 @@ const ImageGallery = ({images}) => {
 	}
 
 	return (
-		<div className="flex w-full flex-col justify-center text-center">
+		<div className="flex w-full flex-col justify-center text-center z-50">
 			<div className="relative inline-block">
 				<img
 					src={images[currentIndex]}

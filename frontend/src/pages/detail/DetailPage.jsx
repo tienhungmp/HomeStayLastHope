@@ -26,13 +26,13 @@ export default function DetailPage() {
 	const commentsRef = useRef()
 	const amenityRef = useRef()
 	const noteRef = useRef()
-	const policyRef = useRef()
 
-	const [activeSection, setActiveSection] = useState()
+	const [activeSection, setActiveSection] = useState('overview')
 	const [numbers, setNumbers] = useState([])
 	const [loading, setLoading] = useState(true)
 	const [data, setData] = useState([])
 	const {auth} = useAuth()
+	
 	useEffect(() => {
 		if (!id) return
 		factories
@@ -42,8 +42,6 @@ export default function DetailPage() {
 	}, [id])
 
 	async function handleConfirm() {
-		// Validate room availability before proceeding
-
 		const payload = {
 			userId: auth._id,
 			accommodationId: id,
@@ -52,7 +50,6 @@ export default function DetailPage() {
 				bookedQuantity: numbers[0]?.number
 			}
 		}
-
 
 		try {
 			const res = await factories.checkRoomAvailability(payload)
@@ -66,7 +63,6 @@ export default function DetailPage() {
 			return
 		}
 
-		// Proceed to confirmation if validation passes
 		const ticket = {
 			...data,
 			roomsSelected: numbers,
@@ -79,13 +75,15 @@ export default function DetailPage() {
 			},
 		})
 	}
-	function handlePressScroll(ref) {
-		setActiveSection(ref)
+	
+	function handlePressScroll(ref, sectionName) {
+		setActiveSection(sectionName)
 		scrollToSection(ref)
 	}
+	
 	function scrollToSection(ref) {
 		if (ref.current) {
-			ref.current.scrollIntoView({behavior: 'smooth'})
+			ref.current.scrollIntoView({behavior: 'smooth', block: 'start'})
 		}
 	}
 
@@ -99,312 +97,342 @@ export default function DetailPage() {
 	}
 
 	return (
-		<div className="mx-auto max-w-full px-5 pb-24 pt-10 lg:max-w-[80%] lg:px-0">
-			<SectionNavigator />
+		<div className="min-h-screen bg-gray-50">
+			<div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+				<SectionNavigator />
 
-			{loading ? (
-				<Loading />
-			) : (
-				<>
-					<Overview />
-					<InfoPrice />
-					{/* <PolicyRender /> */}
-					{/* <Amenity selectedIds={data?.amenities} /> */}
-					{data?.noteAccommodation && <NoteRender note={data?.noteAccommodation} />}
-					<CommentList data={data.tickets} />
-				</>
+				{loading ? (
+					<Loading />
+				) : (
+					<div className="space-y-10">
+						<Overview />
+						<InfoPrice />
+						{data?.noteAccommodation && <NoteRender note={data?.noteAccommodation} />}
+						<CommentList data={data.tickets} />
+					</div>
+				)}
+			</div>
+			
+			{/* Bottom padding for fixed booking bar */}
+			{auth && numbers.reduce((total, number) => total + number.number, 0) > 0 && (
+				<div className="h-24"></div>
 			)}
 		</div>
 	)
 
-	// section
+	// Section Navigator
 	function SectionNavigator() {
+		const sections = [
+			{key: 'overview', label: 'Tổng quan', ref: overviewRef},
+			{key: 'info', label: 'Phòng & Giá', ref: infoRef},
+			{key: 'amenity', label: 'Tiện nghi', ref: amenityRef},
+			...(data?.noteAccommodation ? [{key: 'note', label: 'Ghi chú', ref: noteRef}] : []),
+			{key: 'comments', label: 'Đánh giá', ref: commentsRef}
+		]
+
 		return (
-			<div className="flex w-full flex-grow flex-row overflow-x-auto border-b-1 border-grey-200">
-				<Button
-					variant="ghost"
-					className={cn('h-20 min-w-32 flex-grow rounded-none border-0 border-b-3 border-b-cyan-dark', '')}
-					onClick={() => handlePressScroll(overviewRef)}
-				>
-					Tổng quan
-				</Button>
-				<Button
-					variant="ghost"
-					className={cn('h-20 min-w-32 flex-grow rounded-none border-none', activeSection === infoRef)}
-					onClick={() => handlePressScroll(infoRef)}
-				>
-					Phòng và giá phòng
-				</Button>
-				<Button
-					variant="ghost"
-					className={cn('h-20 flex-grow rounded-none border-none', activeSection === amenityRef)}
-					onClick={() => handlePressScroll(amenityRef)}
-				>
-					Tiện nghi
-				</Button>
-				{/* <Button
-					variant="ghost"
-					className={cn('h-20 min-w-32 flex-grow rounded-none border-none', activeSection === policyRef)}
-					onClick={() => handlePressScroll(policyRef)}
-				>
-					Chính sách
-				</Button> */}
-				<Button
-					variant="ghost"
-					className={cn('h-20 min-w-32 flex-grow rounded-none border-none', activeSection === noteRef)}
-					onClick={() => handlePressScroll(noteRef)}
-				>
-					Ghi chú
-				</Button>
-				<Button
-					variant="ghost"
-					className={cn('h-20 min-w-32 flex-grow rounded-none border-none', activeSection === commentsRef)}
-					onClick={() => handlePressScroll(commentsRef)}
-				>
-					Bình luận
-				</Button>
-			</div>
+			<nav className="sticky top-0 z-40 mb-6 -mx-4 bg-white shadow-sm sm:-mx-6 lg:-mx-8">
+				<div className="mx-auto max-w-7xl">
+					<div className="flex overflow-x-auto scrollbar-hide">
+						{sections.map(({key, label, ref}) => (
+							<button
+								key={key}
+								onClick={() => handlePressScroll(ref, key)}
+								className={cn(
+									'relative flex-shrink-0 border-b-2 px-6 py-4 text-sm font-medium transition-colors',
+									activeSection === key
+										? 'border-blue-600 text-blue-600'
+										: 'border-transparent text-gray-600 hover:border-gray-300 hover:text-gray-900'
+								)}
+							>
+								{label}
+							</button>
+						))}
+					</div>
+				</div>
+			</nav>
 		)
 	}
-	// overview
+
+	// Overview Section
 	function Overview() {
 		return (
-			<div
-				ref={overviewRef}
-				className="my-5"
-			>
-				<div className="flex items-start justify-between gap-4 overflow-scroll">
-					<div className="w-3/4 min-w-[300px]">
-						<h1 className="mb-0 text-3xl font-bold">{data.name}</h1>
-						<h1 className="text-md mb-2 font-bold text-blue-400">{data.address}</h1>
-						<div className="mb-4 grid grid-cols-1 gap-2 md:grid-cols-2 lg:grid-cols-3">
-							{data.images.slice(0, 5).map((image, index) => (
+			<div ref={overviewRef}>
+				{/* Header */}
+				<div className="mb-6">
+					<h1 className="mb-2 text-3xl font-bold text-gray-900 sm:text-4xl">
+						{data.name}
+					</h1>
+					<div className="flex items-center gap-2 text-gray-600">
+						<svg className="h-5 w-5 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+							<path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
+						</svg>
+						<span className="text-sm">{data.address}</span>
+					</div>
+				</div>
+
+				<div className="grid gap-6 lg:grid-cols-3">
+					{/* Main Content */}
+					<div className="space-y-6 lg:col-span-2">
+						{/* Image Gallery */}
+						<div className="grid grid-cols-4 gap-2 sm:gap-3">
+							<div
+								className="col-span-4 cursor-pointer overflow-hidden rounded-xl sm:col-span-2 sm:row-span-2"
+								onClick={() => openModalImageGallery(data?.images)}
+							>
 								<Image
-									key={index}
-									className="aspect-video overflow-hidden rounded-md border"
-									src={image}
-									alt={`Resort view ${index + 1}`}
-									style={{
-										height: '100%',
-										width: '100%',
-										minWidth: '250px',
-										minHeight: '190px',
-										objectFit: 'cover',
-									}}
+									className="h-full w-full object-cover transition-transform duration-300 hover:scale-105"
+									src={data.images[0]}
+									alt="Main view"
+									style={{height: '100%', minHeight: '350px'}}
 								/>
-							))}
-							{data.images.length > 5 && (
-								<button
-									className="relative"
+							</div>
+							{data.images.slice(1, 5).map((image, index) => (
+								<div
+									key={index}
+									className="group relative col-span-2 cursor-pointer overflow-hidden rounded-xl sm:col-span-1"
 									onClick={() => openModalImageGallery(data?.images)}
 								>
 									<Image
-										src={data.images[6]}
-										alt="Resort view 6"
-										className="z-0 h-auto w-full"
+										className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+										src={image}
+										alt={`View ${index + 2}`}
+										style={{height: '100%', minHeight: '170px'}}
 									/>
-									<div className="absolute inset-0 flex items-center justify-center rounded-lg bg-black bg-opacity-50 text-lg font-bold text-white">
-										+{data.images.length - 6}
-									</div>
-								</button>
-							)}
+									{index === 3 && data.images.length > 5 && (
+										<div className="absolute inset-0 flex items-center justify-center bg-black/50">
+											<span className="text-xl font-bold text-white">
+												+{data.images.length - 5}
+											</span>
+										</div>
+									)}
+								</div>
+							))}
 						</div>
 
-						<div
-							className="mb-4"
-							dangerouslySetInnerHTML={{__html: data?.description}}
-						/>
-					</div>
-					<div className="w-1/4 min-w-[200px] rounded-lg bg-gray-100 p-4 shadow-lg">
-						<div className="mb-4 flex justify-between">
-							<span className="text-lg font-bold">Đánh giá</span>
-							<div className="mb-2 flex items-center justify-center">
-								{!data?.rating ? (
-									<p className="mt-0.5">Chưa có đánh giá</p>
-								) : (
-									<>
-										{Array.from({length: data?.rating}, (_, index) => (
-											<i
-												key={index}
-												className={`fas fa-star ${index < data?.rating ? 'text-yellow-500' : 'text-gray-300'}`}
-											></i>
-										))}
-									</>
-								)}
-							</div>
-						</div>
-						<h2 className="mb-2 text-lg font-bold">Điểm nổi bật của chỗ nghỉ</h2>
-						{!!data?.outstanding && (
+						{/* Description */}
+						<div className="rounded-xl bg-white p-5 shadow-sm">
+							<h2 className="mb-3 text-xl font-bold text-gray-900">Mô tả</h2>
 							<div
-								className="mb-4 list-inside list-disc"
-								dangerouslySetInnerHTML={{__html: data?.outstanding}}
-							></div>
-						)}
-						<h2 className="mb-2 text-lg font-bold">Các lựa chọn của bạn</h2>
-						{!!data?.options && (
-							<div
-								className="mb-4 list-inside list-disc"
-								dangerouslySetInnerHTML={{__html: data?.options}}
-							></div>
-						)}
-						<h2 className="mb-2 text-lg font-bold">Hoạt động</h2>
-						{!!data?.options && (
-							<div
-								className="mb-4 list-inside list-disc"
-								dangerouslySetInnerHTML={{__html: data?.activities}}
-							></div>
-						)}
-						<button
-							onClick={() => handlePressScroll(infoRef)}
-							className="w-full rounded-lg bg-blue-600 py-2 text-white"
-						>
-							Đặt ngay
-						</button>
-					</div>
-				</div>
-				<div className="flex w-full flex-col gap-6 lg:flex-row lg:justify-between">
-					<div className="flex-grow">
-						<h2 className="mb-4 text-2xl font-bold text-gray-800">Tiện nghi nổi bật</h2>
-						<div
-							ref={amenityRef}
-							className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-3 xl:grid-cols-4"
-						>
-							{data.amenities.map(amenity => {
-								const item = AMENITIES.find(item => item.id === amenity)
-								if (!item) return null
-								return (
-									<div
-										key={item.id}
-										className="flex items-center gap-3 rounded-xl border border-gray-200 bg-white p-4 shadow-sm transition hover:shadow-md"
-									>
-										{item.icon && <span className="text-2xl text-cyan-600">{item.icon()}</span>}
-										<p className="text-sm font-semibold text-gray-700">{item.title}</p>
-									</div>
-								)
-							})}
-						</div>
-					</div>
-
-					<div className="min-w-[400px]">
-						<h2 className="mb-2 w-full text-xl font-bold">Hiển thị trên bản đồ</h2>
-						<div className="flex w-full justify-end">
-							<GoogleMapLink
-								lat={data?.lat}
-								lng={data?.lng}
+								className="prose prose-sm max-w-none text-gray-700"
+								dangerouslySetInnerHTML={{__html: data?.description}}
 							/>
 						</div>
-						<MapView
-							zoom={20}
-							height={'400px'}
-							width={'100%'}
-							lat={data?.lat}
-							lng={data?.lng}
-						/>
+
+						{/* Amenities */}
+						<div ref={amenityRef} className="rounded-xl bg-white p-5 shadow-sm">
+							<h2 className="mb-4 text-xl font-bold text-gray-900">Tiện nghi</h2>
+							<div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+								{data.amenities.map(amenity => {
+									const item = AMENITIES.find(i => i.id === amenity)
+									if (!item) return null
+									return (
+										<div
+											key={item.id}
+											className="flex items-center gap-3 rounded-lg bg-blue-50/50 p-3"
+										>
+											{item.icon && (
+												<span className="text-xl text-blue-600">
+													{item.icon()}
+												</span>
+											)}
+											<p className="text-sm font-medium text-gray-700">{item.title}</p>
+										</div>
+									)
+								})}
+							</div>
+						</div>
+
+						{/* Map */}
+						<div className="rounded-xl bg-white p-5 shadow-sm">
+							<div className="mb-3 flex items-center justify-between">
+								<h2 className="text-xl font-bold text-gray-900">Vị trí</h2>
+								<GoogleMapLink lat={data?.lat} lng={data?.lng} />
+							</div>
+							<div className="overflow-hidden rounded-lg">
+								<MapView zoom={20} height={'350px'} width={'100%'} lat={data?.lat} lng={data?.lng} />
+							</div>
+						</div>
+					</div>
+
+					{/* Sidebar */}
+					<div className="lg:col-span-1">
+						<div className="sticky top-20">
+							<div className="rounded-xl bg-white shadow-sm">
+								{/* Rating */}
+								<div className="border-b p-5">
+									<h3 className="mb-3 font-bold text-gray-900">Đánh giá</h3>
+									{!data?.rating ? (
+										<p className="text-center text-sm text-gray-500">Chưa có đánh giá</p>
+									) : (
+										<div className="flex justify-center gap-1">
+											{Array.from({length: 5}, (_, index) => (
+												<i
+													key={index}
+													className={`fas fa-star text-lg ${index < data?.rating ? 'text-yellow-400' : 'text-gray-300'}`}
+												></i>
+											))}
+										</div>
+									)}
+								</div>
+
+								{/* Outstanding */}
+								{!!data?.outstanding && (
+									<div className="border-b p-5">
+										<h3 className="mb-3 font-bold text-gray-900">Điểm nổi bật</h3>
+										<div
+											className="prose prose-sm max-w-none text-gray-600"
+											dangerouslySetInnerHTML={{__html: data?.outstanding}}
+										></div>
+									</div>
+								)}
+
+								{/* Options */}
+								{!!data?.options && (
+									<div className="border-b p-5">
+										<h3 className="mb-3 font-bold text-gray-900">Các lựa chọn</h3>
+										<div
+											className="prose prose-sm max-w-none text-gray-600"
+											dangerouslySetInnerHTML={{__html: data?.options}}
+										></div>
+									</div>
+								)}
+
+								{/* Activities */}
+								{!!data?.activities && (
+									<div className="border-b p-5">
+										<h3 className="mb-3 font-bold text-gray-900">Hoạt động</h3>
+										<div
+											className="prose prose-sm max-w-none text-gray-600"
+											dangerouslySetInnerHTML={{__html: data?.activities}}
+										></div>
+									</div>
+								)}
+
+								{/* CTA Button */}
+								<div className="p-5">
+									<button
+										onClick={() => handlePressScroll(infoRef, 'info')}
+										className="w-full rounded-lg bg-gradient-to-r from-blue-600 to-cyan-500 py-3 font-semibold text-white transition-all hover:shadow-lg active:scale-95"
+									>
+										Xem phòng & Đặt ngay
+									</button>
+								</div>
+							</div>
+						</div>
 					</div>
 				</div>
 			</div>
 		)
 	}
 
+	// Info Price Section
 	function InfoPrice() {
+		const totalAmount = numbers.reduce((total, number) => total + number.price * number.number, 0)
+		const totalRooms = numbers.reduce((total, number) => total + number.number, 0)
+
 		return (
-			<div
-				ref={infoRef}
-				className="my-10"
-			>
-				<header className="mb-4 flex items-center justify-between">
-					<h1 className="text-3xl font-bold">Phòng trống</h1>
-				</header>
-				<div className="my-10 flex flex-row">
-					<table className="w-full min-w-[900px] border-collapse overflow-scroll">
-						<thead>
-							<tr className="max-h-12 border-l bg-blue-100">
-								<th className="border p-2">Loại phòng</th>
-								<th className="border p-2">Số lượng khách</th>
-								<th className="border p-2">Giá phòng</th>
-								<th className="border p-2">Các tiện nghi</th>
-								{auth && <th className="border p-2">Chọn số lượng</th>}
-							</tr>
-						</thead>
-						<tbody>
-							{data?.rooms.filter(room => room.isVisible === true).map((room, index) => (
-								<tr
-									key={index}
-									className="border"
-								>
-									<td className="flex flex-shrink flex-grow flex-col justify-start gap-5 p-4">
-										<button
-											className="relative"
-											onClick={() => openModalImageGallery(room?.images ?? [])}
-										>
-											<Image
-												src={room.images?.[0]}
-												alt="Resort view 6"
-												className="z-auto aspect-video w-full"
-											/>
-											<div className="absolute inset-0 flex items-center justify-center rounded-lg bg-black bg-opacity-10 text-lg font-bold text-white">
-												+{room.images.length}
+			<div ref={infoRef}>
+				<div className="mb-5">
+					<h2 className="text-2xl font-bold text-gray-900">Phòng trống</h2>
+					<p className="mt-1 text-sm text-gray-600">Chọn phòng phù hợp với nhu cầu của bạn</p>
+				</div>
+
+				<div className="space-y-4">
+					{data?.rooms?.filter(room => room.isVisible === true).map((room, index) => (
+						<div
+							key={index}
+							className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition-shadow hover:shadow-md"
+						>
+							<div className="flex flex-col lg:flex-row">
+								{/* Room Image */}
+								<div className="relative lg:w-72 lg:flex-shrink-0">
+									<button
+										className="group/img relative block h-48 w-full overflow-hidden lg:h-full"
+										onClick={() => openModalImageGallery(room?.images ?? [])}
+									>
+										<img
+											src={room.images?.[0]}
+											alt="Room view"
+											className="h-full w-full object-cover transition-transform duration-300 group-hover/img:scale-105"
+										/>
+										<div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 transition-opacity group-hover/img:opacity-100">
+											<div className="rounded-md bg-white/95 px-3 py-1.5">
+												<span className="text-sm font-semibold text-gray-900">
+													Xem {room.images.length} ảnh
+												</span>
 											</div>
-										</button>
-										<div className="font-bold">{room.name}</div>
-										<div
-											className="flex flex-col items-start justify-start text-sm"
-											dangerouslySetInnerHTML={{__html: room.description}}
-										></div>
-									</td>
-									<td className="border p-2 text-center">
-										<div className="flex min-w-[140px] items-center justify-center space-x-1">
-											{Array.from({length: room.capacity}, (_, index) => (
-												<i
-													key={index}
-													className="fas fa-user"
-												></i>
-											))}
 										</div>
-									</td>
-									<td className="p-2 text-center">
-										<div className="min-w-[120px] font-bold text-green-600">{convertStringToNumber(room?.pricePerNight)}</div>
-									</td>
-									<td className="border p-2">
-										<ul className="max-h-60 max-w-[340px] overflow-y-auto text-sm">
-											{AMENITIES_ROOM.map(amenity => {
-												const hasSelectedChild = amenity.items.some(item => room.amenities.includes(item.id))
-												if (room.amenities.includes(amenity.id) || hasSelectedChild) {
-													return (
-														<div
-															key={amenity.id}
-															className="w-[320px]"
-														>
-															<div className="flex items-center gap-2">
-																{amenity.icon()}
-																<p className={cn('text-lg', room.amenities.includes(amenity.id) && 'font-bold')}>{amenity.title}</p>
-															</div>
-															<ul>
-																{amenity.items.map(item => {
-																	if (room.amenities.includes(item.id)) {
-																		return (
-																			<li
-																				key={item.id}
-																				className="flex flex-row items-center gap-2"
-																			>
-																				<i className="fas fa-check text-xs text-gray-400"></i>
-																				<p className="text-xs text-gray-600">{item.title}</p>
-																			</li>
-																		)
-																	}
-																})}
-															</ul>
-														</div>
-													)
-												}
-											})}
-										</ul>
-									</td>
+									</button>
+								</div>
+
+								{/* Room Content */}
+								<div className="flex flex-1 flex-col p-4 lg:p-5">
+									{/* Header with Price */}
+									<div className="mb-3 flex items-start justify-between gap-4">
+										<div className="flex-1">
+											<h3 className="mb-1 text-lg font-bold text-gray-900">{room.name}</h3>
+											<div className="flex items-center gap-2 text-sm text-gray-600">
+												<svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
+													<path d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"/>
+												</svg>
+												<span>{room.capacity} khách</span>
+											</div>
+										</div>
+										<div className="text-right">
+											<div className="text-xs text-gray-500">Mỗi đêm</div>
+											<div className="text-xl font-bold text-emerald-600">
+												{convertStringToNumber(room?.pricePerNight)}
+											</div>
+										</div>
+									</div>
+
+									{/* Description */}
+									<div
+										className="prose prose-sm mb-3 max-w-none text-gray-600 line-clamp-2"
+										dangerouslySetInnerHTML={{__html: room.description}}
+									></div>
+
+									{/* Amenities Compact */}
+									<div className="mb-3 flex flex-wrap gap-2">
+										{AMENITIES_ROOM.slice(0, 4).map(amenity => {
+											const hasSelectedChild = amenity.items.some(item => room.amenities.includes(item.id))
+											if (room.amenities.includes(amenity.id) || hasSelectedChild) {
+												return (
+													<div key={amenity.id} className="flex items-center gap-1.5 rounded-full bg-blue-50 px-3 py-1">
+														<span className="text-sm text-blue-600">{amenity.icon()}</span>
+														<span className="text-xs font-medium text-gray-700">
+															{amenity.title}
+														</span>
+													</div>
+												)
+											}
+										})}
+										{AMENITIES_ROOM.filter(amenity => {
+											const hasSelectedChild = amenity.items.some(item => room.amenities.includes(item.id))
+											return room.amenities.includes(amenity.id) || hasSelectedChild
+										}).length > 4 && (
+											<button
+												onClick={() => openModalImageGallery(room?.images ?? [])}
+												className="rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-600 hover:bg-gray-200"
+											>
+												+{AMENITIES_ROOM.filter(amenity => {
+													const hasSelectedChild = amenity.items.some(item => room.amenities.includes(item.id))
+													return room.amenities.includes(amenity.id) || hasSelectedChild
+												}).length - 4}
+											</button>
+										)}
+									</div>
+
+									{/* Action Area */}
 									{auth && (
-										<td className="border p-2 text-center">
-											<div className="flex min-w-[120px] items-center justify-center gap-5">
+										<div className="mt-auto flex items-center justify-between gap-4 border-t pt-3">
+											<div>
+												<label className="mb-1.5 block text-xs font-medium text-gray-700">
+													Số lượng phòng
+												</label>
 												<NumberInput
-													className="max-w-[80px]"
+													className="w-32"
 													defaultValue={0}
 													min={0}
 													max={100}
@@ -421,257 +449,138 @@ export default function DetailPage() {
 													}
 													clampValueOnBlur={false}
 												>
-													<NumberInputField />
+													<NumberInputField className="h-10 rounded-lg border-2 border-gray-300 text-center font-semibold hover:border-blue-400 focus:border-blue-500" />
 													<NumberInputStepper>
-														<NumberIncrementStepper />
-														<NumberDecrementStepper />
+														<NumberIncrementStepper className="hover:bg-blue-50" />
+														<NumberDecrementStepper className="hover:bg-blue-50" />
 													</NumberInputStepper>
 												</NumberInput>
 											</div>
-										</td>
+											
+											{numbers.find(n => n.roomId === room._id)?.number > 0 && (
+												<div className="rounded-lg bg-emerald-50 px-4 py-2">
+													<div className="text-xs text-gray-600">Tạm tính</div>
+													<div className="text-lg font-bold text-emerald-600">
+														{convertStringToNumber(
+															room.pricePerNight * (numbers.find(n => n.roomId === room._id)?.number || 0)
+														)}
+													</div>
+												</div>
+											)}
+										</div>
 									)}
-								</tr>
-							))}
-						</tbody>
-					</table>
-					{auth && (
-						<div className="flex flex-col border-b border-r">
-							<div className="flex h-[42px] min-w-64 items-center justify-center border border-r bg-blue-100 text-center font-bold 2xl:h-[42px]">
-								Thanh toán
-							</div>
-							<div className="sticky right-0 top-0 p-2">
-								<div className="mx-auto max-w-xs rounded-lg bg-blue-50 p-4 shadow-md">
-									<div className="mb-2 text-xl text-content-primary">Tổng tiền</div>
-									<div className="text-right text-2xl font-bold text-gray-900">
-										{convertStringToNumber(numbers.reduce((total, number) => total + number.price * number.number, 0))}
-									</div>
-									<div className="my-2 flex justify-end">
-										<Button
-											color="primary"
-											variant="shadow"
-											className="rounded-md"
-											disabled={numbers.reduce((total, number) => total + number.number, 0) === 0}
-											onClick={() => handleConfirm(numbers)}
-										>
-											Đặt phòng
-										</Button>
-									</div>
-									<div className="mt-4 text-sm text-gray-700">Bạn sẽ được chuyển sang bước kế tiếp</div>
 								</div>
 							</div>
 						</div>
-					)}
+					))}
 				</div>
+
+				{/* Fixed Booking Summary */}
+				{auth && totalRooms > 0 && (
+					<div className="fixed bottom-0 left-0 right-0 z-50 border-t bg-white shadow-2xl">
+						<div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
+							<div className="flex flex-col items-center justify-between gap-3 sm:flex-row">
+								<div className="flex items-center gap-6">
+									<div>
+										<div className="text-xs text-gray-600">Tổng cộng</div>
+										<div className="text-2xl font-bold text-emerald-600">
+											{convertStringToNumber(totalAmount)}
+										</div>
+									</div>
+									<div className="h-10 w-px bg-gray-300"></div>
+									<div className="text-center">
+										<div className="text-xs text-gray-600">Số phòng</div>
+										<div className="text-xl font-bold text-gray-900">{totalRooms}</div>
+									</div>
+								</div>
+								<Button
+									className="w-full rounded-lg bg-gradient-to-r from-blue-600 to-cyan-500 px-8 py-2.5 font-semibold text-white transition-all hover:shadow-lg active:scale-95 sm:w-auto"
+									onClick={() => handleConfirm(numbers)}
+								>
+									Đặt phòng ngay
+								</Button>
+							</div>
+						</div>
+					</div>
+				)}
 			</div>
 		)
 	}
 
+	// Review Component
 	function Review({review}) {
 		return (
-			<div className="mb-4 flex w-full flex-row rounded-lg bg-white p-4 shadow">
-				<div className="flex w-1/4 items-start">
-					<img
-						src={review?.userId?.profilePictureUrl}
-						alt="User avatar"
-						className="mr-4 h-12 w-12 rounded-full"
-					/>
-					<div>
-						<div className="mb-1 flex items-center">
-							<h3 className="mr-2 font-bold">{review.userId?.fullName}</h3>
-						</div>
-						<div className="mb-1 text-sm text-gray-500">{review?.stayDetails}</div>
-						<div className="mb-1 text-sm text-gray-500">{review?.stayDuration}</div>
-						<div className="text-sm text-gray-500">{TYPE_HOST.find(x => x.id === review?.accommodation?.type)?.name}</div>
-					</div>
-				</div>
-				<div className="mt- flex-1">
-					<div className="flex items-center justify-between">
-						<div className="text-sm text-gray-500">{getDate(review?.fromDate)}</div>
-						<div className="rounded px-2 py-1 text-sm font-bold text-white">
-							<div className="ml-2 flex items-center">
-								{[...Array(review.star)].map((_, i) => (
-									<i
-										key={i}
-										className={`fa fa-star text-yellow-500`}
-									></i>
-								))}
-							</div>
+			<div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+				<div className="mb-3 flex items-start justify-between gap-4">
+					<div className="flex gap-3">
+						<img
+							src={review?.userId?.profilePictureUrl}
+							alt="User avatar"
+							className="h-12 w-12 rounded-full border-2 border-blue-50 object-cover"
+						/>
+						<div>
+							<h3 className="font-bold text-gray-900">{review.userId?.fullName}</h3>
+							<div className="text-xs text-gray-500">{review?.stayDetails}</div>
+							<div className="text-xs text-gray-500">{review?.stayDuration}</div>
 						</div>
 					</div>
-					<h4 className="mt-2 font-bold">{review.review}</h4>
+					<div className="flex items-center gap-1 rounded-md bg-gradient-to-r from-yellow-400 to-orange-400 px-2.5 py-1">
+						{[...Array(review.star)].map((_, i) => (
+							<i key={i} className="fas fa-star text-xs text-white"></i>
+						))}
+					</div>
 				</div>
+				<div className="mb-2 text-xs text-gray-500">{getDate(review?.fromDate)}</div>
+				<p className="text-sm text-gray-700">{review.review}</p>
 			</div>
 		)
 	}
 
+	// Comment List
 	function CommentList({data}) {
 		return (
-			<div
-				ref={commentsRef}
-				className="mx-auto mt-20 w-full"
-			>
-				<h1 className="mb-4 text-3xl font-bold">Đánh giá của khách</h1>
-				{data?.length === 0 && <h1 className="mb-4 text-center text-3xl font-bold">Chưa có đánh giá nào</h1>}
-				{data?.length > 0 &&
-					data?.map(review => (
-						<Review
-							key={review.id}
-							review={review}
-						/>
-					))}
-			</div>
-		)
-	}
-
-	function Amenity({selectedIds}) {
-		if (!selectedIds) return
-		return (
-			<div
-				ref={amenityRef}
-				className="my-10 flex flex-col"
-			>
-				<h1 className="mb-4 text-3xl font-bold">Dịch vụ đi kèm</h1>
-				<div className="flex flex-row flex-wrap gap-[30px]">
-					{AMENITIES_ROOM.map(amenity => {
-						const hasSelectedChild = amenity.items.some(item => selectedIds.includes(item.id))
-						if (selectedIds.includes(amenity.id) || hasSelectedChild) {
-							return (
-								<div
-									key={amenity.id}
-									className="w-[320px]"
-								>
-									<div className="flex items-center gap-2">
-										{amenity.icon()}
-										<p className={cn('text-lg', selectedIds.includes(amenity.id) && 'font-bold')}>{amenity.title}</p>
-									</div>
-									<ul>
-										{amenity.items.map(item => {
-											if (selectedIds.includes(item.id)) {
-												return (
-													<li
-														key={item.id}
-														className="flex flex-row items-center gap-2"
-													>
-														<i className="fas fa-check text-xs text-gray-400"></i>
-														<p className="text-xs text-gray-600">{item.title}</p>
-													</li>
-												)
-											}
-										})}
-									</ul>
-								</div>
-							)
-						}
-					})}
+			<div ref={commentsRef}>
+				<div className="mb-5">
+					<h2 className="text-2xl font-bold text-gray-900">Đánh giá của khách</h2>
+					<p className="mt-1 text-sm text-gray-600">Trải nghiệm thực tế từ khách hàng</p>
 				</div>
+				
+				{data?.length === 0 ? (
+					<div className="flex min-h-[180px] items-center justify-center rounded-xl border-2 border-dashed border-gray-300 bg-white">
+						<div className="text-center">
+							<i className="fas fa-comments mb-2 text-3xl text-gray-400"></i>
+							<p className="font-semibold text-gray-500">Chưa có đánh giá nào</p>
+						</div>
+					</div>
+				) : (
+					<div className="space-y-3">
+						{data?.map(review => <Review key={review.id} review={review} />)}
+					</div>
+				)}
 			</div>
 		)
 	}
 
-	function PolicyRender() {
-		return (
-			<div
-				ref={policyRef}
-				className="mx-auto my-20 w-full rounded-lg bg-white"
-			>
-				<h1 className="mb-4 text-3xl font-bold">Chính sách</h1>
-				<div className="mb-4 rounded-lg border p-4 shadow-md">
-					<div className="mb-4 flex">
-						<div className="flex w-72">
-							<i className="fas fa-sign-in-alt mr-2 text-xl"></i>
-							<h2 className="font-bold">Nhận phòng</h2>
-						</div>
-						<div dangerouslySetInnerHTML={{__html: data?.policy?.checkIn}} />
-					</div>
-					<div className="mb-4 flex flex-row">
-						<div className="flex w-72">
-							<i className="fas fa-sign-out-alt mr-2 text-xl"></i>
-							<h2 className="font-bold">Trả phòng</h2>
-						</div>
-						<div dangerouslySetInnerHTML={{__html: data?.policy?.checkOut}} />
-					</div>
-
-					<div className="mb-4 flex flex-row">
-						<div className="flex min-w-72">
-							<i className="fas fa-ban mr-2 text-xl"></i>
-							<h2 className="font-bold">Hủy đặt phòng/ Trả trước</h2>
-						</div>
-						<div dangerouslySetInnerHTML={{__html: data?.policy?.cancellationPolicy}} />
-					</div>
-					<div className="mb-4 flex">
-						<div className="flex min-w-72">
-							<i className="fas fa-ban mr-2 text-xl"></i>
-							<h2 className="font-bold">Không giới hạn độ tuổi</h2>
-						</div>
-						<div>
-							<p>Không có yêu cầu về độ tuổi khi nhận phòng</p>
-						</div>
-					</div>
-					<div className="mb-4 flex">
-						<div className="flex min-w-72">
-							<i className="fas fa-paw mr-2 text-xl"></i>
-							<h2 className="font-bold">Vật nuôi</h2>
-						</div>
-						<div> {data?.policy?.allowPetPolicy ? 'Cho phép mang theo vật nuôi' : 'Không cho phép mang theo vật nuôi'}</div>
-					</div>
-					<div className="flex">
-						<div className="flex min-w-72">
-							<i className="fas fa-credit-card mr-2 text-xl"></i>
-							<h2 className="font-bold">Các phương thức thanh toán</h2>
-						</div>
-						<div>
-							<div className="mt-2 flex space-x-2">
-								<div className="flex items-center justify-center rounded-lg border px-2">
-									<img
-										src="https://upload.wikimedia.org/wikipedia/commons/4/41/Visa_Logo.png"
-										alt="Visa"
-										className="h-4 w-14 rounded-lg border"
-									/>
-								</div>
-								<div className="flex items-center justify-center rounded-lg border px-2">
-									<img
-										src="https://upload.wikimedia.org/wikipedia/commons/a/a4/Mastercard_2019_logo.svg"
-										alt="MasterCard logo"
-										className="h-4 w-14"
-									/>
-								</div>
-								<div className="flex items-center justify-center rounded-lg border px-1">
-									<img
-										src="https://www.shareicon.net/data/512x512/2016/07/08/117093_online_512x512.png"
-										alt="JCB logo"
-										className="h-4 w-14"
-									/>
-								</div>
-								<div className="flex items-center justify-center rounded-lg border px-1">
-									<img
-										src="https://cdn.haitrieu.com/wp-content/uploads/2022/10/Logo-VNPAY-QR-1.png"
-										alt="Cash logo"
-										className="h-4 w-14"
-									/>
-								</div>
-								<div className="rounded-md bg-green-600 px-2 py-0.5 text-white">
-									<span className="text-sm">Tiền mặt</span>
-								</div>
-							</div>
-						</div>
-					</div>
-				</div>
-			</div>
-		)
-	}
-
+	// Note Render
 	function NoteRender({note}) {
 		if (note)
 			return (
-				<div
-					ref={noteRef}
-					className="my-10 flex flex-col"
-				>
-					<h1 className="mb-4 text-3xl font-bold">Ghi chú</h1>
-					<div
-						className="rounded-lg border p-4 shadow-md"
-						dangerouslySetInnerHTML={{__html: note}}
-					></div>
+				<div ref={noteRef}>
+					<div className="mb-5">
+						<h2 className="text-2xl font-bold text-gray-900">Ghi chú quan trọng</h2>
+					</div>
+					<div className="rounded-xl border-l-4 border-amber-500 bg-amber-50 p-5 shadow-sm">
+						<div className="mb-3 flex items-center gap-2 text-amber-700">
+							<svg className="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+								<path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+							</svg>
+							<span className="font-bold">Lưu ý</span>
+						</div>
+						<div
+							className="prose prose-sm max-w-none text-gray-700"
+							dangerouslySetInnerHTML={{__html: note}}
+						></div>
+					</div>
 				</div>
 			)
 	}

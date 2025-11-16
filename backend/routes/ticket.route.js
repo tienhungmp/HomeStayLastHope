@@ -47,13 +47,6 @@ router.post("/", async (req, res) => {
                 });
             }
         } else {
-            if ([0, 1, 2].includes(accommodation.type)) {
-                return res.status(400).json({
-                    message:
-                        "Không chọn phòng với dạng chỗ nghỉ nguyên căn",
-                });
-            }
-
             for (const { roomId, bookedQuantity } of rooms) {
                 const room = accommodation.rooms.find(
                     (r) => r._id.toString() === roomId,
@@ -485,25 +478,116 @@ router.post('/review/:ticketId', async (req, res) => {
         res.status(500).json({ message: 'Xảy ra lỗi hệ thông', error: error.message });
     }
 });
-router.patch('/update-show/:id', async (req, res) => {
+
+router.post('/update-show/:id', async (req, res) => {
     try {
         const { id } = req.params;
-        const { isShow } = req.body;
+        const { star, review } = req.body;
 
-        const ticket = await Ticket.findByIdAndUpdate(
-            id,
-            { isShow },
-            { new: true },
-        );
-        if (!ticket) {
-            return res.status(404).json({ message: 'Đánh giá không tồn tại' });
+        // Validate input
+        if (!id) {
+            return res.status(400).json({ 
+                message: 'Thiếu ID đặt phòng' 
+            });
         }
-        res.status(200).json(ticket);
+
+        if (!star || star < 1 || star > 5) {
+            return res.status(400).json({ 
+                message: 'Đánh giá phải từ 1 đến 5 sao' 
+            });
+        }
+
+        // Find ticket
+        const ticket = await Ticket.findById(id);
+        if (!ticket) {
+            return res.status(404).json({ 
+                message: 'Không tìm thấy thông tin đặt phòng' 
+            });
+        }
+
+        // Check if already reviewed
+        const isNewReview = !ticket.star || ticket.star === 0;
+        const oldStar = Number(ticket.star) || 0;
+
+        // Update ticket
+        ticket.star = Number(star);
+        ticket.review = review || "";
+        await ticket.save();
+
+        // Find and update accommodation
+        const accommodation = await Accommodation.findById(ticket.accommodation);
+        if (!accommodation) {
+            return res.status(404).json({
+                message: 'Không tìm thấy thông tin chỗ nghỉ'
+            });
+        }
+
+        // Initialize values if they don't exist
+        let currentRating = Number(accommodation.rating) || 0;
+        let currentRatingCount = Number(accommodation.ratingCount) || 0;
+
+        console.log('Before update:', {
+            currentRating,
+            currentRatingCount,
+            isNewReview,
+            oldStar,
+            newStar: star
+        });
+
+        if (isNewReview) {
+            // New review: increase count and recalculate rating
+            const newRatingCount = currentRatingCount + 1;
+            const totalRating = (currentRating * currentRatingCount) + Number(star);
+            const newRating = totalRating / newRatingCount;
+
+            accommodation.rating = Math.round(newRating * 10) / 10;
+            accommodation.ratingCount = newRatingCount;
+        } else {
+            // Update existing review: adjust rating
+            if (currentRatingCount > 0) {
+                const totalRating = (currentRating * currentRatingCount) - oldStar + Number(star);
+                const newRating = totalRating / currentRatingCount;
+                accommodation.rating = Math.round(newRating * 10) / 10;
+            } else {
+                // Edge case
+                accommodation.rating = Number(star);
+                accommodation.ratingCount = 1;
+            }
+        }
+
+        console.log('After calculation:', {
+            rating: accommodation.rating,
+            ratingCount: accommodation.ratingCount
+        });
+
+        // Validate before save
+        if (isNaN(accommodation.rating)) {
+            accommodation.rating = Number(star);
+            accommodation.ratingCount = 1;
+        }
+
+        await accommodation.save();
+
+        res.status(200).json({
+            message: 'Đánh giá thành công',
+            ticket: {
+                id: ticket._id,
+                star: ticket.star,
+                review: ticket.review
+            },
+            accommodation: {
+                id: accommodation._id,
+                rating: accommodation.rating,
+                ratingCount: accommodation.ratingCount
+            }
+        });
     } catch (error) {
-        console.error(error);
-        res
-            .status(500)
-            .json({ message: 'Lỗi hệ thống', error: error.message });
+        console.error('Review error:', error);
+        res.status(500).json({ 
+            message: 'Xảy ra lỗi hệ thống', 
+            error: error.message,
+            stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+        });
     }
 });
 
