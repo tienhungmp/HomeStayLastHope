@@ -60,13 +60,12 @@ router.post("/", async (req, res) => {
                 const overlappingTickets = await Ticket.find({
                     accommodation: accommodationId,
                     rooms: { $elemMatch: { roomId } },
-                    $or: [
-                        { fromDate: { $lte: fromDate }, toDate: { $gte: toDate } },
-                        { fromDate: { $gte: fromDate, $lte: toDate } },
-                        { toDate: { $gte: fromDate, $lte: toDate } },
-                    ],
+                    $and: [
+                        { fromDate: { $lt: toDate } },      // Booking cũ bắt đầu trước khi booking mới kết thúc
+                        { toDate: { $gt: fromDate } }       // Booking cũ kết thúc sau khi booking mới bắt đầu
+                    ]
                 });
-
+                
                 const totalBookedQuantity = overlappingTickets.reduce((sum, ticket) => {
                     const roomBooking = ticket.rooms?.find((r) => r.roomId?.equals(roomId));
                     return sum + (roomBooking?.bookedQuantity || 0);

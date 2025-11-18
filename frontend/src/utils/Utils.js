@@ -157,10 +157,15 @@ export const getDate = (timestamp, type = 1, format = 'DD/MM/YYYY') => {
             };
             break;
         case 8:
-            result = result = new Date(
+            // Create date in Vietnam timezone (UTC+7)
+            result = new Date(
                 timestamp.year,
                 timestamp.month - 1,
                 timestamp.day,
+                timestamp.hour || 0,
+                timestamp.minute || 0,
+                timestamp.second || 0,
+                timestamp.millisecond || 0
             );
             break;
         case 9:

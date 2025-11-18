@@ -198,6 +198,7 @@ router.post("/", async (req, res) => {
         res.status(500).json({ message: "Internal server error" });
     }
 });
+
 router.put("/:id", async (req, res) => {
     try {
         const { id } = req.params;
@@ -221,19 +222,25 @@ router.put("/:id", async (req, res) => {
             "type",
         ];
 
-        const fieldsToUpdate = Object.keys(updateData).filter((key) =>
-            allowedFields.includes(key),
-        );
+        // Lọc và tạo object chỉ chứa các field được phép
+        const fieldsToUpdate = {};
+        Object.keys(updateData).forEach((key) => {
+            if (allowedFields.includes(key)) {
+                fieldsToUpdate[key] = updateData[key];
+            }
+        });
 
-        if (fieldsToUpdate.length === 0) {
+        if (Object.keys(fieldsToUpdate).length === 0) {
             return res.status(400).json({ message: "No valid fields to update." });
         }
 
         const updatedAccommodation = await Accommodation.findByIdAndUpdate(
             id,
-            { $set: updateData },
+            { $set: fieldsToUpdate }, // ✅ ĐÚNG - truyền object
             { new: true },
-        );
+        )
+            .populate("policy", "checkIn checkOut cancellationPolicy allowPetPolicy")
+            .populate("rooms", "name capacity quantity pricePerNight amenities");
 
         if (!updatedAccommodation) {
             return res.status(404).json({ message: "Accommodation not found." });
@@ -606,61 +613,6 @@ router.get("/review-count/:id", async (req, res) => {
     } catch (error) {
         console.error("Error fetching accommodation details:", error);
         res.status(500).json({ message: "Internal server error" });
-    }
-});
-
-router.put("/:id", async (req, res) => {
-    try {
-        const { id } = req.params;
-        const updateData = req.body;
-
-        const allowedFields = [
-            "name",
-            "avatar",
-            "city",
-            "address",
-            "pricePerNight",
-            // "policy",
-            "amenities",
-            // "rooms",
-            "lat",
-            "lng",
-            "images",
-            "activities",
-            "description",
-            "noteAccommodation",
-            "options",
-            "outstanding",
-            "type",
-            // "isVerified",
-            // "rating",
-            // "ratingCount",
-        ];
-
-        const fieldsToUpdate = Object.keys(updateData).filter((key) =>
-            allowedFields.includes(key),
-        );
-
-        if (fieldsToUpdate.length === 0) {
-            return res.status(400).json({ message: "No valid fields to update." });
-        }
-
-        const updatedAccommodation = await Accommodation.findByIdAndUpdate(
-            id,
-            { $set: updateData },
-            { new: true },
-        )
-            .populate("policy", "checkIn checkOut cancellationPolicy allowPetPolicy")
-            .populate("rooms", "name capacity quantity pricePerNight amenities");
-
-        if (!updatedAccommodation) {
-            return res.status(404).json({ message: "Accommodation not found." });
-        }
-
-        res.status(200).json(updatedAccommodation);
-    } catch (error) {
-        console.error("Error updating accommodation:", error);
-        res.status(500).json({ message: "Internal server error." });
     }
 });
 

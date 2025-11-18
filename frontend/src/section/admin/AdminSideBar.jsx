@@ -1,7 +1,7 @@
 import {Button} from '@chakra-ui/react'
 import {cn} from '@utils/Utils'
 import React from 'react'
-import {useNavigate} from 'react-router-dom'
+import {Link, useNavigate} from 'react-router-dom'
 import {useAuth} from '../../context/AuthContext'
 
 export default function AdminSideBar({selectedItem, onSelectItem, filteredItems = []}) {
@@ -36,18 +36,22 @@ export default function AdminSideBar({selectedItem, onSelectItem, filteredItems 
 					)
 				})}
 			</div>
-			<div className="mb-2 flex flex-col items-center justify-center">
-				<Button
-					onClick={handleLogout}
-					size="sm"
-					className="w-[80%]"
+
+			<div className="mb-4 flex flex-col items-center gap-3 px-4">
+				<Link
+					to="/"
+					className="flex w-full items-center justify-center rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-100 hover:text-emerald-800"
 				>
+					<i className="fa fa-home mr-2" aria-hidden="true"></i>
+					Home
+				</Link>
+				<button
+					onClick={handleLogout}
+					className="flex w-full items-center justify-center rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-sm font-semibold text-red-700 transition hover:bg-red-100 hover:text-red-800"
+				>
+					<i className="fa fa-sign-out-alt mr-2" aria-hidden="true"></i>
 					Đăng xuất
-					<i
-						className="fa fa-sign-out-alt ml-2 text-red"
-						aria-hidden="true"
-					></i>
-				</Button>
+				</button>
 			</div>
 		</aside>
 	)
